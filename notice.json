@@ -1,3 +1,7 @@
 {
-  "active": false
+  "active": true,
+  "type": "info",
+  "title": "টেস্ট",
+  "message": "এটা পরীক্ষামূলক নোটিশ",
+  "date": "2026-10-28-093236"
 }
