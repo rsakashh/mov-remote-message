@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>অ্যাডমিন প্যানেল</title>
+<style>
+:root{--bg:#f5f3ff;--card:#fff;--ink:#1e1b4b;--sub:#6b7280;--line:#e5e7eb;--ac:#6d28d9;--ac2:#7c3aed;--ok:#059669;--bad:#dc2626;--warn:#b45309;--chip:#ede9fe}
+@media (prefers-color-scheme:dark){:root{--bg:#0f0a1e;--card:#1a1330;--ink:#ede9fe;--sub:#a5a1c2;--line:#2e2750;--ac:#a78bfa;--ac2:#8b5cf6;--ok:#34d399;--bad:#f87171;--warn:#fbbf24;--chip:#2a2050}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:16px 16px 96px}
+h1{font-size:20px;margin:0}
+h2{font-size:17px;margin:0 0 4px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.sub{color:var(--sub);font-size:13px}
+label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
+input,select,textarea{width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:88px;resize:vertical}
+input[type=checkbox]{width:22px;min-height:22px;height:22px}
+.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;color:var(--ink);margin:0}
+button{min-height:44px;padding:0 16px;border-radius:12px;border:0;font:inherit;font-weight:700;cursor:pointer;background:var(--ac2);color:#fff}
+button.ghost{background:var(--chip);color:var(--ac)}
+button.bad{background:transparent;color:var(--bad);border:1px solid var(--line)}
+button:disabled{opacity:.5}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.tabs button{flex:1;white-space:nowrap;background:var(--card);color:var(--sub);border:1px solid var(--line)}
+.tabs button.on{background:var(--ac2);color:#fff;border-color:var(--ac2)}
+.msg{padding:10px 12px;border-radius:12px;font-size:14px;margin:10px 0}
+.msg.ok{background:rgba(5,150,105,.12);color:var(--ok)}.msg.bad{background:rgba(220,38,38,.12);color:var(--bad)}.msg.warn{background:rgba(180,83,9,.12);color:var(--warn)}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;overflow:auto;font-size:12px;margin:8px 0 0}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;justify-content:center}
+.bar>div{max-width:720px;width:100%;display:flex;gap:10px}.bar button{flex:1}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+'use strict';
+var OWNER='rsakashh',REPO='mov-remote-message',BRANCH='main';
+var LS='ds_admin_v1';
+var RULE_KEYS=[
+ ['allowance','ভাতা (এখন ২৪৫০)',0,100000],
+ ['basicDiv','বেসিক ভাগ (এখন ৩)',0.5,20],
+ ['basicMul','বেসিক গুণ (এখন ২)',0.1,20],
+ ['dayDiv','কর্তনের দিন (এখন ৩০)',20,31],
+ ['otNum','OT গুণক (এখন ২)',0.5,10],
+ ['otDiv','OT ভাগ (এখন ১০৪)',26,400]
+];
+var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{},defaults:{}},cfgSha:null,notice:null,noticeSha:null,loaded:false};
+var app=document.getElementById('app');
+var enc=new TextEncoder(),dec=new TextDecoder();
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function b64(buf){var a=new Uint8Array(buf),s='';for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s);}
+function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
+function utf8ToB64(str){return b64(enc.encode(str));}
+function b64ToUtf8(s){return dec.decode(unb64(String(s).replace(/\s/g,'')));}
+
+/* ---------- token lock (password -> AES) ---------- */
+async function keyFrom(pw,salt){
+  var km=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:250000,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function lockToken(token,pw){
+  var salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  var k=await keyFrom(pw,salt);
+  var ct=await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},k,enc.encode(token));
+  localStorage.setItem(LS,JSON.stringify({s:b64(salt),i:b64(iv),d:b64(ct)}));
+}
+async function unlockToken(pw){
+  var o=JSON.parse(localStorage.getItem(LS));
+  var k=await keyFrom(pw,unb64(o.s));
+  var pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(o.i)},k,unb64(o.d));
+  return dec.decode(pt);
+}
+function hasSaved(){try{return !!localStorage.getItem(LS);}catch(e){return false;}}
+
+/* ---------- GitHub API ---------- */
+async function gh(path,opt){
+  opt=opt||{};
+  var res=await fetch('https://api.github.com'+path,{method:opt.method||'GET',cache:'no-store',headers:{'Authorization':'Bearer '+S.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},body:opt.body?JSON.stringify(opt.body):undefined});
+  var data=null;try{data=await res.json();}catch(e){}
+  if(!res.ok){var m=(data&&data.message)||('HTTP '+res.status);var err=new Error(m);err.status=res.status;throw err;}
+  return data;
+}
+function errText(e){
+  if(e.status===401)return 'টোকেন ভুল বা মেয়াদ শেষ। নতুন টোকেন দিয়ে আবার সেট করুন।';
+  if(e.status===403)return 'অনুমতি নেই বা সীমা শেষ ('+e.message+')';
+  if(e.status===404)return 'ফাইল/রিপো পাওয়া যায়নি বা টোকেনের অনুমতি নেই';
+  if(e.status===409||e.status===422)return 'ফাইল অন্য কোথাও বদলেছে। "আবার লোড" চেপে নতুন করে চেষ্টা করুন। ('+e.message+')';
+  return e.message||'ত্রুটি';
+}
+async function getFile(name){
+  try{
+    var d=await gh('/repos/'+OWNER+'/'+REPO+'/contents/'+name+'?ref='+BRANCH);
+    return {sha:d.sha,json:JSON.parse(b64ToUtf8(d.content))};
+  }catch(e){if(e.status===404)return {sha:null,json:null};throw e;}
+}
+async function putFile(name,obj,sha,message){
+  var body={message:message,content:utf8ToB64(JSON.stringify(obj,null,2)+'\n'),branch:BRANCH};
+  if(sha)body.sha=sha;
+  var d=await gh('/repos/'+OWNER+'/'+REPO+'/contents/'+name,{method:'PUT',body:body});
+  return d.content.sha;
+}
+
+/* ---------- model <-> form ---------- */
+function newDate(){return 'n'+Date.now().toString(36);}
+function defNotice(){return {active:true,push:false,type:'info',date:newDate(),title:'',message:'',button:'',below:''};}
+function loadModel(cfgJ,noteJ){
+  var c=cfgJ&&typeof cfgJ==='object'?cfgJ:{};
+  S.cfg={calc:(Array.isArray(c.calc)?c.calc:[]).map(function(r){var o={from:String(r.from||'')};RULE_KEYS.forEach(function(k){o[k[0]]=(r[k[0]]===undefined||r[k[0]]===null)?'':String(r[k[0]]);});return o;}),
+         ads:(c.ads&&typeof c.ads==='object')?c.ads:{},defaults:(c.defaults&&typeof c.defaults==='object')?c.defaults:{}};
+  var n=noteJ&&typeof noteJ==='object'?noteJ:null;
+  S.notice=n?{active:!!n.active,push:n.push===true,type:n.type||'info',date:n.date||newDate(),title:n.title||'',message:n.message||'',button:n.button||'',below:n.below||''}:defNotice();
+}
+function buildConfig(){
+  var errs=[],out={};
+  var seen={},calc=[];
+  S.cfg.calc.forEach(function(r,i){
+    var tag='নিয়ম '+(i+1)+': ';
+    if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(r.from)){errs.push(tag+'মাস বাছুন');return;}
+    if(seen[r.from]){errs.push(tag+'একই মাস দুবার ('+r.from+')');return;}
+    seen[r.from]=1;
+    var o={from:r.from},any=false,badv=false;
+    RULE_KEYS.forEach(function(k){
+      var v=String(r[k[0]]).trim();if(v==='')return;
+      var n=Number(v);
+      if(!isFinite(n)||n<k[2]||n>k[3]){errs.push(tag+k[1]+' — '+k[2]+' থেকে '+k[3]+' এর মধ্যে দিন');badv=true;return;}
+      o[k[0]]=n;any=true;
+    });
+    if(!any&&!badv)errs.push(tag+'অন্তত একটা মান দিন');
+    calc.push(o);
+  });
+  if(calc.length)out.calc=calc;
+  var ads={};['salary','workers','report'].forEach(function(k){if(typeof S.cfg.ads[k]==='boolean')ads[k]=S.cfg.ads[k];});
+  if(Object.keys(ads).length)out.ads=ads;
+  var d={};
+  var nr=String(S.cfg.defaults.nightRate==null?'':S.cfg.defaults.nightRate).trim();
+  if(nr!==''){var a=Number(nr);if(!isFinite(a)||a<0||a>100000)errs.push('নাইট রেট ০–১,০০,০০০ এর মধ্যে দিন');else d.nightRate=a;}
+  var wd=String(S.cfg.defaults.workDays==null?'':S.cfg.defaults.workDays).trim();
+  if(wd!==''){var b=Number(wd);if(!isFinite(b)||b<20||b>31)errs.push('কার্যদিবস ২০–৩১ এর মধ্যে দিন');else d.workDays=b;}
+  if(Object.keys(d).length)out.defaults=d;
+  return {obj:out,errs:errs};
+}
+function buildNotice(){
+  var n=S.notice,errs=[];
+  var o={active:!!n.active,type:n.type,date:String(n.date||'').trim(),title:String(n.title).trim(),message:String(n.message).trim()};
+  if(n.active){
+    if(!o.title)errs.push('শিরোনাম দিন');
+    if(!o.message)errs.push('বার্তা দিন');
+  }
+  if(o.title.length>80)errs.push('শিরোনাম ৮০ অক্ষরের মধ্যে');
+  if(o.message.length>500)errs.push('বার্তা ৫০০ অক্ষরের মধ্যে');
+  if(!/^[\w.:-]{1,40}$/.test(o.date))errs.push('কোড (date) শুধু ইংরেজি অক্ষর, সংখ্যা, - _ . : (সর্বোচ্চ ৪০)');
+  if(String(n.button).trim())o.button=String(n.button).trim().slice(0,30);
+  var bl=String(n.below).trim();
+  if(bl){if(!/^\d+(\.\d+){0,2}$/.test(bl))errs.push('সংস্করণ এমন হবে: 4.0.2');else o.below=bl;}
+  if(n.push)o.push=true;
+  return {obj:o,errs:errs};
+}
+
+/* ---------- rendering ---------- */
+function msgHtml(){if(!S.msg)return '';return '<div class="msg '+S.msg.k+'">'+esc(S.msg.t)+'</div>';}
+function setMsg(k,t){S.msg={k:k,t:t};}
+function viewLogin(){
+  var saved=hasSaved();
+  var h='<div class="top"><h1>🔐 অ্যাডমিন প্যানেল</h1></div><div class="card">';
+  if(saved){
+    h+='<h2>পাসওয়ার্ড দিন</h2><div class="sub">আপনার সংরক্ষিত টোকেন খুলতে।</div><label>পাসওয়ার্ড</label><input id="pw" type="password" autocomplete="current-password"><div style="margin-top:12px" class="row"><button id="doUnlock">ঢুকুন</button></div><div style="margin-top:12px"><button class="bad" id="forget">সংরক্ষিত টোকেন মুছুন</button></div>';
+  }else{
+    h+='<h2>প্রথমবার সেটআপ</h2><div class="sub">GitHub-এর fine-grained টোকেন (শুধু <b>'+REPO+'</b> রিপো, Contents: Read and write) এবং নিজের একটা পাসওয়ার্ড দিন। টোকেন পাসওয়ার্ড দিয়ে তালাবন্ধ হয়ে শুধু এই ব্রাউজারে থাকবে।</div><label>GitHub টোকেন</label><input id="tk" type="password" autocomplete="off" placeholder="github_pat_..."><label>নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="pw" type="password" autocomplete="new-password"><label>পাসওয়ার্ড আবার</label><input id="pw2" type="password" autocomplete="new-password"><div style="margin-top:12px"><button id="doSetup" style="width:100%">সংরক্ষণ করে ঢুকুন</button></div>';
+  }
+  h+=msgHtml()+'</div>';
+  return h;
+}
+function ruleHtml(r,i){
+  var h='<div class="card"><div class="top"><h2>নিয়ম '+(i+1)+'</h2><button class="bad" data-delrule="'+i+'">মুছুন</button></div><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"><div class="sub" style="margin-top:6px">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div><div class="row" style="flex-wrap:wrap">';
+  RULE_KEYS.forEach(function(k){h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
+  return h+'</div></div>';
+}
+function adSel(k,label){
+  var v=S.cfg.ads[k];var cur=typeof v==='boolean'?(v?'1':'0'):'';
+  return '<label>'+label+'</label><select data-ad="'+k+'"><option value=""'+(cur===''?' selected':'')+'>বদলাবে না</option><option value="1"'+(cur==='1'?' selected':'')+'>বিজ্ঞাপন চালু</option><option value="0"'+(cur==='0'?' selected':'')+'>বিজ্ঞাপন বন্ধ</option></select>';
+}
+function viewMain(){
+  var h='<div class="top"><h1>⚙️ অ্যাডমিন প্যানেল</h1><div style="display:flex;gap:6px"><button class="ghost" id="reload">আবার লোড</button><button class="ghost" id="lock">লক</button></div></div>';
+  h+='<div class="tabs"><button data-tab="calc" class="'+(S.tab==='calc'?'on':'')+'">হিসাব</button><button data-tab="ads" class="'+(S.tab==='ads'?'on':'')+'">বিজ্ঞাপন ও ডিফল্ট</button><button data-tab="note" class="'+(S.tab==='note'?'on':'')+'">নোটিশ</button></div>';
+  h+=msgHtml();
+  if(S.tab==='calc'){
+    h+='<div class="msg warn">সতর্কতা: ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।</div>';
+    S.cfg.calc.forEach(function(r,i){h+=ruleHtml(r,i);});
+    if(!S.cfg.calc.length)h+='<div class="card sub">কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।</div>';
+    h+='<button class="ghost" id="addRule" style="width:100%">+ নতুন নিয়ম যোগ</button>';
+  }
+  if(S.tab==='ads'){
+    h+='<div class="card"><h2>বিজ্ঞাপনের সুইচ</h2><div class="sub">সর্বশেষ প্রকাশিত মানই ফোনে চলে। জরুরি হলে "বন্ধ" দিন।</div>'+adSel('salary','বেতন ট্যাব')+adSel('workers','কর্মী ট্যাব')+adSel('report','রিপোর্ট ট্যাব')+'</div>';
+    h+='<div class="card"><h2>নতুন কর্মীর ডিফল্ট</h2><div class="sub">ফাঁকা = বদলাবে না</div><div class="row"><div><label>নাইট রেট (৳)</label><input inputmode="decimal" data-def="nightRate" value="'+esc(S.cfg.defaults.nightRate==null?'':S.cfg.defaults.nightRate)+'"></div><div><label>কার্যদিবস</label><input inputmode="numeric" data-def="workDays" value="'+esc(S.cfg.defaults.workDays==null?'':S.cfg.defaults.workDays)+'"></div></div></div>';
+  }
+  if(S.tab==='note'){
+    var n=S.notice;
+    h+='<div class="card"><label class="chk"><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'> নোটিশ চালু</label><label class="chk"><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'> ফোনে নোটিফিকেশনও পাঠান (একবার)</label>';
+    h+='<label>ধরন</label><select data-n="type">'+['info','success','warning','error'].map(function(t){var nm={info:'তথ্য',success:'সফল/আপডেট',warning:'সতর্কতা',error:'জরুরি'}[t];return '<option value="'+t+'"'+(n.type===t?' selected':'')+'>'+nm+'</option>';}).join('')+'</select>';
+    h+='<label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div class="row"><input data-n="date" value="'+esc(n.date)+'"><button class="ghost" id="newCode" style="flex:0 0 auto">নতুন কোড</button></div>';
+    h+='<label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea>';
+    h+='<label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2"></div>';
+  }
+  var cur=S.tab==='note'?buildNotice():buildConfig();
+  h+='<div class="card"><div class="sub">প্রকাশের আগে এই ফাইল যাবে ('+(S.tab==='note'?'notice.json':'config.json')+'):</div><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></div>';
+  if(cur.errs.length)h+='<div class="msg bad">'+cur.errs.map(esc).join('<br>')+'</div>';
+  h+='<div class="bar"><div><button id="publish"'+((S.busy||cur.errs.length)?' disabled':'')+'>'+(S.busy?'পাঠানো হচ্ছে…':'🚀 প্রকাশ করুন ('+(S.tab==='note'?'নোটিশ':'কনফিগ')+')')+'</button></div></div>';
+  return h;
+}
+function render(){
+  if(!S.token){app.innerHTML=viewLogin();bindLogin();return;}
+  app.innerHTML=viewMain();bindMain();
+}
+function keep(fn){var y=window.scrollY,a=document.activeElement,id=a&&a.getAttribute&&(a.getAttribute('data-rule')!==null?'r'+a.getAttribute('data-rule')+a.getAttribute('data-k'):a.getAttribute('data-n')!==null?'n'+a.getAttribute('data-n'):a.getAttribute('data-def')!==null?'d'+a.getAttribute('data-def'):null),pos=a&&a.selectionStart;
+  fn();render();window.scrollTo(0,y);
+  if(id){var sel=id[0]==='r'?'[data-rule="'+id.slice(1).replace(/[^\d].*/,'')+'"][data-k="'+id.replace(/^r\d+/,'')+'"]':id[0]==='n'?'[data-n="'+id.slice(1)+'"]':'[data-def="'+id.slice(1)+'"]';var el=document.querySelector(sel);if(el&&el.type!=='checkbox'&&el.type!=='month'){el.focus();try{el.setSelectionRange(pos,pos);}catch(e){}}}
+}
+
+/* ---------- events ---------- */
+function $(id){return document.getElementById(id);}
+function bindLogin(){
+  if($('doUnlock')){
+    var go=async function(){
+      try{S.token=await unlockToken($('pw').value);S.msg=null;await loadAll();}
+      catch(e){S.token=null;setMsg('bad','ভুল পাসওয়ার্ড');render();}
+    };
+    $('doUnlock').onclick=go;$('pw').onkeydown=function(e){if(e.key==='Enter')go();};
+    $('forget').onclick=function(){if(confirm('সংরক্ষিত টোকেন মুছে ফেলবেন? আবার টোকেন দিতে হবে।')){localStorage.removeItem(LS);S.msg=null;render();}};
+  }
+  if($('doSetup')){
+    $('doSetup').onclick=async function(){
+      var tk=$('tk').value.trim(),p1=$('pw').value,p2=$('pw2').value;
+      if(!tk){setMsg('bad','টোকেন দিন');render();return;}
+      if(p1.length<6){setMsg('bad','পাসওয়ার্ড কমপক্ষে ৬ অক্ষর');render();return;}
+      if(p1!==p2){setMsg('bad','দুই পাসওয়ার্ড মেলেনি');render();return;}
+      S.token=tk;
+      try{
+        var r=await gh('/repos/'+OWNER+'/'+REPO);
+        if(r.permissions&&r.permissions.push===false)throw Object.assign(new Error('লেখার অনুমতি নেই'),{status:403});
+        await lockToken(tk,p1);S.msg=null;await loadAll();
+      }catch(e){S.token=null;setMsg('bad',errText(e));render();}
+    };
+  }
+}
+async function loadAll(){
+  S.busy=true;setMsg('ok','লোড হচ্ছে…');render();
+  try{
+    var c=await getFile('config.json'),n=await getFile('notice.json');
+    S.cfgSha=c.sha;S.noticeSha=n.sha;loadModel(c.json,n.json);S.loaded=true;S.msg=null;
+  }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
+  S.busy=false;render();
+}
+function bindMain(){
+  $('reload').onclick=function(){if(confirm('অসংরক্ষিত পরিবর্তন বাদ যাবে। আবার লোড করবেন?'))loadAll();};
+  $('lock').onclick=function(){S.token=null;S.loaded=false;S.msg=null;render();};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'),function(b){b.onclick=function(){S.tab=b.getAttribute('data-tab');S.msg=null;render();};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-rule]'),function(el){
+    el.oninput=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-delrule]'),function(b){b.onclick=function(){if(confirm('এই নিয়ম তালিকা থেকে সরাবেন? (যে ফোনে আগেই পৌঁছেছে সেখান থেকে যাবে না)'))keep(function(){S.cfg.calc.splice(+b.getAttribute('data-delrule'),1);});};});
+  if($('addRule'))$('addRule').onclick=function(){keep(function(){var d=new Date();d.setMonth(d.getMonth()+1);var o={from:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};RULE_KEYS.forEach(function(k){o[k[0]]='';});S.cfg.calc.push(o);});};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ad]'),function(el){el.onchange=function(){var k=el.getAttribute('data-ad');if(el.value==='')delete S.cfg.ads[k];else S.cfg.ads[k]=el.value==='1';refreshPreview();};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-def]'),function(el){el.oninput=function(){S.cfg.defaults[el.getAttribute('data-def')]=el.value;refreshPreview();};});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-n]'),function(el){
+    var k=el.getAttribute('data-n');
+    var h=function(){S.notice[k]=el.type==='checkbox'?el.checked:el.value;refreshPreview();};
+    el.oninput=h;el.onchange=h;
+  });
+  if($('newCode'))$('newCode').onclick=function(){keep(function(){S.notice.date=newDate();});};
+  $('publish').onclick=publish;
+}
+function refreshPreview(){
+  var cur=S.tab==='note'?buildNotice():buildConfig();
+  var pre=document.querySelector('pre');if(pre)pre.textContent=JSON.stringify(cur.obj,null,2);
+  var b=$('publish');if(b)b.disabled=!!(S.busy||cur.errs.length);
+  var old=document.getElementById('errbox');
+  if(old)old.remove();
+  if(cur.errs.length){var d=document.createElement('div');d.id='errbox';d.className='msg bad';d.innerHTML=cur.errs.map(esc).join('<br>');var bar=document.querySelector('.bar');bar.parentNode.insertBefore(d,bar);}
+}
+async function publish(){
+  var isNote=S.tab==='note';
+  var cur=isNote?buildNotice():buildConfig();
+  if(cur.errs.length)return;
+  var name=isNote?'notice.json':'config.json';
+  if(!isNote&&!confirm('হিসাবের নিয়ম/সুইচ ফোনে পৌঁছে যাবে (নিয়ম স্থায়ী)। নিশ্চিত?'))return;
+  if(isNote&&!confirm('নোটিশ প্রকাশ করবেন?'))return;
+  S.busy=true;S.msg=null;render();
+  try{
+    var sha=await putFile(name,cur.obj,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
+    if(isNote)S.noticeSha=sha;else S.cfgSha=sha;
+    setMsg('ok','✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।');
+  }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
+  S.busy=false;render();window.scrollTo(0,0);
+}
+render();
+})();
+</script>
+</body>
+</html>
