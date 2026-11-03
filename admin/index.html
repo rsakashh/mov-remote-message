@@ -35,6 +35,14 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;justify-content:center}
 .bar>div{max-width:720px;width:100%;display:flex;gap:10px}.bar button{flex:1}
 .hide{display:none}
+.phone{max-width:300px;margin:8px auto 14px;border:6px solid #111;border-radius:30px;background:#0a0015;color:#fff;padding:16px 12px;min-height:150px;font-size:14px}
+.gate{background:#17102b;border:1px solid #3b2a6b;border-radius:20px;padding:18px;text-align:center}
+.gt{font-size:18px;font-weight:900;margin-top:6px}.gm{font-size:13px;line-height:1.6;color:#cdbff5;margin:8px 0 4px}
+.gb{margin-top:8px;padding:11px;border-radius:12px;border:1px solid #4c3a85;color:#c4b5fd;font-weight:800}.gb.p{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.tip{margin-top:10px;border-radius:12px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);padding:8px 10px;font-size:12.5px;font-weight:600;color:#c7d2fe}
+.chip2{font-size:11px;font-weight:800;border-radius:12px;padding:5px 8px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.4);color:#c7d2fe;max-width:55%;text-align:center}
+.pill{font-size:12px;font-weight:700;border-radius:99px;padding:6px 12px}
+.sch{margin-top:14px;padding-top:6px;border-top:1px dashed var(--line)}
 </style>
 </head>
 <body>
@@ -52,7 +60,7 @@ var RULE_KEYS=[
  ['otNum','OT গুণক (এখন ২)',0.5,10],
  ['otDiv','OT ভাগ (এখন ১০৪)',26,400]
 ];
-var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{},defaults:{}},cfgSha:null,notice:null,noticeSha:null,loaded:false};
+var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{ids:{}},defaults:{},flags:{},min:{},maint:{},texts:{},occ:[],rate:''},cfgSha:null,notice:null,noticeSha:null,loaded:false,pg:'20000',hist:{file:'config.json',list:null,loading:false,view:null}};
 var app=document.getElementById('app');
 var enc=new TextEncoder(),dec=new TextDecoder();
 
@@ -110,14 +118,33 @@ async function putFile(name,obj,sha,message){
 }
 
 /* ---------- model <-> form ---------- */
+var DEF={allowance:2450,basicDiv:3,basicMul:2,dayDiv:30,otNum:2,otDiv:104};
+var FLAG_KEYS=[['pdf','PDF ও WhatsApp শেয়ার'],['cloud','ক্লাউড সিঙ্ক'],['backup','ব্যাকআপ ও রিস্টোর'],['raise','বেতন বৃদ্ধি ক্যালকুলেটর'],['reminders','রিমাইন্ডার ও নোটিফিকেশন']];
+var NT_COL={info:'#3b82f6',success:'#10b981',warning:'#f59e0b',error:'#ef4444'};
+function ob(x){return x&&typeof x==='object'&&!Array.isArray(x)?JSON.parse(JSON.stringify(x)):{};}
 function newDate(){return 'n'+Date.now().toString(36);}
-function defNotice(){return {active:true,push:false,type:'info',date:newDate(),title:'',message:'',button:'',below:''};}
-function loadModel(cfgJ,noteJ){
-  var c=cfgJ&&typeof cfgJ==='object'?cfgJ:{};
+function defNotice(){return {active:true,push:false,type:'info',date:newDate(),title:'',message:'',button:'',below:'',startAt:'',endAt:'',rollout:''};}
+function loadCfg(c){
+  c=c&&typeof c==='object'?c:{};
   S.cfg={calc:(Array.isArray(c.calc)?c.calc:[]).map(function(r){var o={from:String(r.from||'')};RULE_KEYS.forEach(function(k){o[k[0]]=(r[k[0]]===undefined||r[k[0]]===null)?'':String(r[k[0]]);});return o;}),
-         ads:(c.ads&&typeof c.ads==='object')?c.ads:{},defaults:(c.defaults&&typeof c.defaults==='object')?c.defaults:{}};
-  var n=noteJ&&typeof noteJ==='object'?noteJ:null;
-  S.notice=n?{active:!!n.active,push:n.push===true,type:n.type||'info',date:n.date||newDate(),title:n.title||'',message:n.message||'',button:n.button||'',below:n.below||''}:defNotice();
+    ads:ob(c.ads),defaults:ob(c.defaults),flags:ob(c.flags),min:ob(c.min),maint:ob(c.maint),texts:ob(c.texts),
+    occ:(Array.isArray(c.occ)?c.occ:[]).map(function(e){return {date:String((e&&e.date)||''),title:String((e&&e.title)||'')};}),
+    rate:(c.rate===undefined||c.rate===null)?'':String(c.rate)};
+  if(!S.cfg.ads.ids||typeof S.cfg.ads.ids!=='object')S.cfg.ads.ids={};
+}
+function loadNotice(n){
+  n=n&&typeof n==='object'?n:null;
+  S.notice=n?{active:!!n.active,push:n.push===true,type:n.type||'info',date:n.date||newDate(),title:n.title||'',message:n.message||'',button:n.button||'',below:n.below||'',startAt:n.startAt||'',endAt:n.endAt||'',rollout:(n.rollout===undefined||n.rollout===null)?'':String(n.rollout)}:defNotice();
+}
+function gp(path){var o=S.cfg,ps=path.split('.');for(var i=0;i<ps.length;i++){if(o==null)return undefined;o=o[ps[i]];}return o;}
+function sp(path,v){var ps=path.split('.'),o=S.cfg;for(var i=0;i<ps.length-1;i++){if(!o[ps[i]]||typeof o[ps[i]]!=='object')o[ps[i]]={};o=o[ps[i]];}o[ps[ps.length-1]]=v;}
+function dp(path){var ps=path.split('.'),o=S.cfg;for(var i=0;i<ps.length-1;i++){if(!o[ps[i]])return;o=o[ps[i]];}delete o[ps[ps.length-1]];}
+function sched(src,out,errs,tag){
+  var s=String(src.startAt||''),e=String(src.endAt||''),r=String(src.rollout==null?'':src.rollout).trim();
+  if(s){if(isNaN(Date.parse(s)))errs.push(tag+'শুরুর সময় ভুল');else out.startAt=s;}
+  if(e){if(isNaN(Date.parse(e)))errs.push(tag+'শেষের সময় ভুল');else out.endAt=e;}
+  if(out.startAt&&out.endAt&&Date.parse(out.endAt)<=Date.parse(out.startAt))errs.push(tag+'শেষের সময় শুরুর পরে হতে হবে');
+  if(r!==''){var n=Number(r);if(!isFinite(n)||n<0||n>100||Math.round(n)!==n)errs.push(tag+'ধাপে ধাপে চালু: ০–১০০ এর পূর্ণসংখ্যা');else if(n<100)out.rollout=n;}
 }
 function buildConfig(){
   var errs=[],out={};
@@ -138,14 +165,61 @@ function buildConfig(){
     calc.push(o);
   });
   if(calc.length)out.calc=calc;
-  var ads={};['salary','workers','report'].forEach(function(k){if(typeof S.cfg.ads[k]==='boolean')ads[k]=S.cfg.ads[k];});
+  var ads={};['salary','workers','report','banner','native'].forEach(function(k){if(typeof S.cfg.ads[k]==='boolean')ads[k]=S.cfg.ads[k];});
+  var ids={};
+  [['ot','OT ব্যানার'],['salary','বেতন ব্যানার'],['employee','কর্মী/রিপোর্ট ব্যানার'],['native','নেটিভ']].forEach(function(k){
+    var v=String((S.cfg.ads.ids||{})[k[0]]||'').trim();if(v==='')return;
+    if(!/^ca-app-pub-\d{10,20}\/\d{6,15}$/.test(v))errs.push(k[1]+' ইউনিট আইডি ভুল (ca-app-pub-XXXX/YYYY)');else ids[k[0]]=v;
+  });
+  if(Object.keys(ids).length)ads.ids=ids;
   if(Object.keys(ads).length)out.ads=ads;
-  var d={};
-  var nr=String(S.cfg.defaults.nightRate==null?'':S.cfg.defaults.nightRate).trim();
+  var d={},D=S.cfg.defaults;
+  var nr=String(D.nightRate==null?'':D.nightRate).trim();
   if(nr!==''){var a=Number(nr);if(!isFinite(a)||a<0||a>100000)errs.push('নাইট রেট ০–১,০০,০০০ এর মধ্যে দিন');else d.nightRate=a;}
-  var wd=String(S.cfg.defaults.workDays==null?'':S.cfg.defaults.workDays).trim();
+  var wd=String(D.workDays==null?'':D.workDays).trim();
   if(wd!==''){var b=Number(wd);if(!isFinite(b)||b<20||b>31)errs.push('কার্যদিবস ২০–৩১ এর মধ্যে দিন');else d.workDays=b;}
+  if(typeof D.bonusOn==='boolean')d.bonusOn=D.bonusOn;
+  var ba=String(D.bonusAmt==null?'':D.bonusAmt).trim();
+  if(ba!==''){var c=Number(ba);if(!isFinite(c)||c<0||c>10000000)errs.push('বোনাস ০–১,০০,০০,০০০ এর মধ্যে দিন');else d.bonusAmt=c;}
   if(Object.keys(d).length)out.defaults=d;
+  var off={};FLAG_KEYS.forEach(function(k){if(S.cfg.flags[k[0]]===false)off[k[0]]=false;});
+  if(Object.keys(off).length){sched(S.cfg.flags,off,errs,'সুইচ: ');out.flags=off;}
+  var mn={},soft=String(S.cfg.min.soft||'').trim(),hard=String(S.cfg.min.hard||'').trim();
+  if(soft||hard){
+    if(soft){if(!/^\d+(\.\d+){0,3}$/.test(soft))errs.push('নরম আপডেটের সংস্করণ এমন হবে: 4.0.2');else mn.soft=soft;}
+    if(hard){if(!/^\d+(\.\d+){0,3}$/.test(hard))errs.push('বাধ্যতামূলক আপডেটের সংস্করণ এমন হবে: 4.0.2');else mn.hard=hard;}
+    var mm=String(S.cfg.min.msg||'').trim();if(mm.length>300)errs.push('আপডেট বার্তা ৩০০ অক্ষরের মধ্যে');else if(mm)mn.msg=mm;
+    var mu=String(S.cfg.min.url||'').trim();if(mu){if(!/^https:\/\/\S+$/.test(mu))errs.push('আপডেট লিংক https:// দিয়ে শুরু হতে হবে');else mn.url=mu;}
+    sched(S.cfg.min,mn,errs,'আপডেট গেট: ');
+    out.min=mn;
+  }
+  if(S.cfg.maint.on===true){
+    var mt={on:true},ms=String(S.cfg.maint.msg||'').trim();
+    if(ms.length>300)errs.push('রক্ষণাবেক্ষণ বার্তা ৩০০ অক্ষরের মধ্যে');else if(ms)mt.msg=ms;
+    sched(S.cfg.maint,mt,errs,'রক্ষণাবেক্ষণ: ');
+    out.maint=mt;
+  }
+  var occ=[];
+  S.cfg.occ.forEach(function(e,i){
+    var t=String(e.title).trim();
+    if(!e.date&&!t)return;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(e.date)||!t){errs.push('দিবস '+(i+1)+': তারিখ ও নাম দুটোই দিন');return;}
+    if(t.length>60){errs.push('দিবস '+(i+1)+': নাম ৬০ অক্ষরের মধ্যে');return;}
+    occ.push({date:e.date,title:t});
+  });
+  if(occ.length>40)errs.push('সর্বোচ্চ ৪০টি দিবস');
+  occ.sort(function(x,y){return x.date<y.date?-1:x.date>y.date?1:0;});
+  if(occ.length)out.occ=occ;
+  var tx={},T=S.cfg.texts;
+  var tip=String(T.tip||'').trim();if(tip.length>160)errs.push('টিপ ১৬০ অক্ষরের মধ্যে');else if(tip)tx.tip=tip;
+  var sh=String(T.share||'').trim();if(sh.length>60)errs.push('শেয়ার শিরোনাম ৬০ অক্ষরের মধ্যে');else if(sh)tx.share=sh;
+  var ml=String(T.mail||'').trim();if(ml){if(!/^[^\s@]{1,64}@[^\s@]{1,120}\.[^\s@]{2,20}$/.test(ml))errs.push('ইমেইল ঠিকানা ভুল');else tx.mail=ml;}
+  var wa=String(T.wa||'').trim();if(wa){if(!/^\+?\d{8,15}$/.test(wa)&&!/^https:\/\/\S+$/.test(wa))errs.push('WhatsApp: দেশের কোডসহ নম্বর (+8801…) অথবা https লিংক');else tx.wa=wa;}
+  [['terms','শর্তাবলী'],['privacy','প্রাইভেসি']].forEach(function(k){var v=String(T[k[0]]||'').trim();if(v){if(!/^https:\/\/\S+$/.test(v))errs.push(k[1]+' লিংক https:// দিয়ে শুরু হতে হবে');else tx[k[0]]=v;}});
+  if(Object.keys(tx).length)out.texts=tx;
+  var rt=String(S.cfg.rate==null?'':S.cfg.rate).trim();
+  if(rt!==''){var rn=Number(rt);if(!isFinite(rn)||rn<0||rn>30||Math.round(rn)!==rn)errs.push('রেটিং প্রম্পট: ০–৩০ (০ = কখনো না)');else out.rate=rn;}
+  if(JSON.stringify(out).length>23000)errs.push('কনফিগ বড় হয়ে গেছে (২৩,০০০ অক্ষরের বেশি)');
   return {obj:out,errs:errs};
 }
 function buildNotice(){
@@ -162,7 +236,52 @@ function buildNotice(){
   var bl=String(n.below).trim();
   if(bl){if(!/^\d+(\.\d+){0,2}$/.test(bl))errs.push('সংস্করণ এমন হবে: 4.0.2');else o.below=bl;}
   if(n.push)o.push=true;
+  sched(n,o,errs,'নোটিশ: ');
   return {obj:o,errs:errs};
+}
+
+/* ---------- phone-look preview ---------- */
+function phone(inner){return '<div class="phone">'+inner+'</div>';}
+function gateHtml(kind,msg,btns){
+  var ic=kind==='maint'?'🛠️':'⬆️';
+  var title=kind==='maint'?'রক্ষণাবেক্ষণ চলছে':kind==='hard'?'আপডেট প্রয়োজন':'নতুন আপডেট এসেছে';
+  var m=msg||(kind==='maint'?'অ্যাপটি সাময়িকভাবে বন্ধ আছে। কিছুক্ষণ পর আবার চেষ্টা করুন।':kind==='hard'?'চালিয়ে যেতে অ্যাপটির নতুন সংস্করণ নিন।':'নতুন সুবিধা ও উন্নতি পেতে অ্যাপটি আপডেট করুন।');
+  var b=btns.map(function(x,i){return '<div class="gb'+(i===0?' p':'')+'">'+x+'</div>';}).join('');
+  return '<div class="gate"><div style="font-size:34px">'+ic+'</div><div class="gt">'+title+'</div><div class="gm">'+esc(m)+'</div>'+b+'</div>';
+}
+function previewHtml(){
+  var h='';
+  if(S.tab==='emerg'){
+    var mn=S.cfg.min||{},hard=String(mn.hard||'').trim(),soft=String(mn.soft||'').trim();
+    if(S.cfg.maint.on===true)h=gateHtml('maint',S.cfg.maint.msg,['আবার দেখুন']);
+    else if(hard)h=gateHtml('hard',mn.msg,['আপডেট করুন']);
+    else if(soft)h=gateHtml('soft',mn.msg,['আপডেট করুন','পরে']);
+    else h='<div class="sub" style="color:#cdbff5;text-align:center;padding:30px 0">কোনো গেট/রক্ষণাবেক্ষণ চালু নেই। ফোনে স্বাভাবিক অ্যাপ দেখাবে।</div>';
+    var off=FLAG_KEYS.filter(function(k){return S.cfg.flags[k[0]]===false;}).map(function(k){return k[1];});
+    if(off.length)h+='<div class="sub" style="color:#fbbf24;margin-top:10px">বন্ধ থাকবে: '+esc(off.join(', '))+'</div>';
+  }else if(S.tab==='content'){
+    var tx=S.cfg.texts,tip=String(tx.tip||'').trim();
+    var next=S.cfg.occ.filter(function(e){return e.date&&e.title;}).sort(function(a,b){return a.date<b.date?-1:1;})[0];
+    h='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:15px">তথ্য প্রদান</b>'+(next?'<span class="chip2">'+esc(next.date.slice(8)+'/'+next.date.slice(5,7))+' '+esc(next.title)+'</span>':'')+'</div>';
+    if(tip)h+='<div class="tip">ℹ️ '+esc(tip)+' ✕</div>';
+    h+='<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
+    h+='<span class="pill" style="background:#3b2a6b">✉ Email</span>';
+    if(String(tx.wa||'').trim())h+='<span class="pill" style="background:#14532d">WhatsApp</span>';
+    h+='<span class="pill" style="background:#7c2d12">Reddit</span></div>';
+    h+='<div class="sub" style="margin-top:10px;color:#a5a1c2">শেয়ার শিরোনাম: '+esc(String(tx.share||'').trim()||'📊 My Overtime Report')+'</div>';
+  }else if(S.tab==='note'){
+    var n=S.notice,c=NT_COL[n.type]||NT_COL.info;
+    h=n.title||n.message?'<div style="border:1.5px solid '+c+'88;background:'+c+'22;border-radius:14px;padding:12px"><div style="font-weight:800;color:'+c+'">'+esc(n.title)+'</div><div style="margin-top:6px;font-size:13px;color:#e5e7eb">'+esc(n.message)+'</div>'+(String(n.button).trim()?'<div class="gb p" style="margin-top:10px;padding:9px">'+esc(n.button)+'</div>':'')+'</div>':'<div class="sub" style="color:#cdbff5;text-align:center;padding:30px 0">শিরোনাম ও বার্তা লিখলে এখানে দেখা যাবে</div>';
+  }
+  return h?'<div class="sub" style="margin-top:12px">📱 ফোনে যেমন দেখাবে (আনুমানিক):</div>'+phone(h):'';
+}
+function calcAt(idx,g){
+  var p={};for(var k in DEF)p[k]=DEF[k];
+  var target=S.cfg.calc[idx].from;
+  S.cfg.calc.filter(function(r){return /^\d{4}-\d{2}$/.test(r.from)&&r.from<=target;}).sort(function(a,b){return a.from<b.from?-1:1;}).forEach(function(r){RULE_KEYS.forEach(function(k){var v=String(r[k[0]]).trim();if(v!==''&&isFinite(Number(v)))p[k[0]]=Number(v);});});
+  var basic=Math.round(((g-p.allowance)/p.basicDiv)*p.basicMul);
+  var ot=Math.round((((g-p.allowance)/p.basicDiv)*(p.otNum/p.otDiv))*100)/100;
+  return 'গ্রস '+g+' ⇒ বেসিক '+basic+' · OT রেট/ঘণ্টা '+ot+' · দিনের কর্তন '+(Math.round(basic/p.dayDiv*100)/100);
 }
 
 /* ---------- rendering ---------- */
@@ -179,54 +298,7 @@ function viewLogin(){
   h+=msgHtml()+'</div>';
   return h;
 }
-function ruleHtml(r,i){
-  var h='<div class="card"><div class="top"><h2>নিয়ম '+(i+1)+'</h2><button class="bad" data-delrule="'+i+'">মুছুন</button></div><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"><div class="sub" style="margin-top:6px">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div><div class="row" style="flex-wrap:wrap">';
-  RULE_KEYS.forEach(function(k){h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
-  return h+'</div></div>';
-}
-function adSel(k,label){
-  var v=S.cfg.ads[k];var cur=typeof v==='boolean'?(v?'1':'0'):'';
-  return '<label>'+label+'</label><select data-ad="'+k+'"><option value=""'+(cur===''?' selected':'')+'>বদলাবে না</option><option value="1"'+(cur==='1'?' selected':'')+'>বিজ্ঞাপন চালু</option><option value="0"'+(cur==='0'?' selected':'')+'>বিজ্ঞাপন বন্ধ</option></select>';
-}
-function viewMain(){
-  var h='<div class="top"><h1>⚙️ অ্যাডমিন প্যানেল</h1><div style="display:flex;gap:6px"><button class="ghost" id="reload">আবার লোড</button><button class="ghost" id="lock">লক</button></div></div>';
-  h+='<div class="tabs"><button data-tab="calc" class="'+(S.tab==='calc'?'on':'')+'">হিসাব</button><button data-tab="ads" class="'+(S.tab==='ads'?'on':'')+'">বিজ্ঞাপন ও ডিফল্ট</button><button data-tab="note" class="'+(S.tab==='note'?'on':'')+'">নোটিশ</button></div>';
-  h+=msgHtml();
-  if(S.tab==='calc'){
-    h+='<div class="msg warn">সতর্কতা: ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।</div>';
-    S.cfg.calc.forEach(function(r,i){h+=ruleHtml(r,i);});
-    if(!S.cfg.calc.length)h+='<div class="card sub">কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।</div>';
-    h+='<button class="ghost" id="addRule" style="width:100%">+ নতুন নিয়ম যোগ</button>';
-  }
-  if(S.tab==='ads'){
-    h+='<div class="card"><h2>বিজ্ঞাপনের সুইচ</h2><div class="sub">সর্বশেষ প্রকাশিত মানই ফোনে চলে। জরুরি হলে "বন্ধ" দিন।</div>'+adSel('salary','বেতন ট্যাব')+adSel('workers','কর্মী ট্যাব')+adSel('report','রিপোর্ট ট্যাব')+'</div>';
-    h+='<div class="card"><h2>নতুন কর্মীর ডিফল্ট</h2><div class="sub">ফাঁকা = বদলাবে না</div><div class="row"><div><label>নাইট রেট (৳)</label><input inputmode="decimal" data-def="nightRate" value="'+esc(S.cfg.defaults.nightRate==null?'':S.cfg.defaults.nightRate)+'"></div><div><label>কার্যদিবস</label><input inputmode="numeric" data-def="workDays" value="'+esc(S.cfg.defaults.workDays==null?'':S.cfg.defaults.workDays)+'"></div></div></div>';
-  }
-  if(S.tab==='note'){
-    var n=S.notice;
-    h+='<div class="card"><label class="chk"><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'> নোটিশ চালু</label><label class="chk"><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'> ফোনে নোটিফিকেশনও পাঠান (একবার)</label>';
-    h+='<label>ধরন</label><select data-n="type">'+['info','success','warning','error'].map(function(t){var nm={info:'তথ্য',success:'সফল/আপডেট',warning:'সতর্কতা',error:'জরুরি'}[t];return '<option value="'+t+'"'+(n.type===t?' selected':'')+'>'+nm+'</option>';}).join('')+'</select>';
-    h+='<label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div class="row"><input data-n="date" value="'+esc(n.date)+'"><button class="ghost" id="newCode" style="flex:0 0 auto">নতুন কোড</button></div>';
-    h+='<label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea>';
-    h+='<label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2"></div>';
-  }
-  var cur=S.tab==='note'?buildNotice():buildConfig();
-  h+='<div class="card"><div class="sub">প্রকাশের আগে এই ফাইল যাবে ('+(S.tab==='note'?'notice.json':'config.json')+'):</div><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></div>';
-  if(cur.errs.length)h+='<div class="msg bad">'+cur.errs.map(esc).join('<br>')+'</div>';
-  h+='<div class="bar"><div><button id="publish"'+((S.busy||cur.errs.length)?' disabled':'')+'>'+(S.busy?'পাঠানো হচ্ছে…':'🚀 প্রকাশ করুন ('+(S.tab==='note'?'নোটিশ':'কনফিগ')+')')+'</button></div></div>';
-  return h;
-}
-function render(){
-  if(!S.token){app.innerHTML=viewLogin();bindLogin();return;}
-  app.innerHTML=viewMain();bindMain();
-}
-function keep(fn){var y=window.scrollY,a=document.activeElement,id=a&&a.getAttribute&&(a.getAttribute('data-rule')!==null?'r'+a.getAttribute('data-rule')+a.getAttribute('data-k'):a.getAttribute('data-n')!==null?'n'+a.getAttribute('data-n'):a.getAttribute('data-def')!==null?'d'+a.getAttribute('data-def'):null),pos=a&&a.selectionStart;
-  fn();render();window.scrollTo(0,y);
-  if(id){var sel=id[0]==='r'?'[data-rule="'+id.slice(1).replace(/[^\d].*/,'')+'"][data-k="'+id.replace(/^r\d+/,'')+'"]':id[0]==='n'?'[data-n="'+id.slice(1)+'"]':'[data-def="'+id.slice(1)+'"]';var el=document.querySelector(sel);if(el&&el.type!=='checkbox'&&el.type!=='month'){el.focus();try{el.setSelectionRange(pos,pos);}catch(e){}}}
-}
 
-/* ---------- events ---------- */
-function $(id){return document.getElementById(id);}
 function bindLogin(){
   if($('doUnlock')){
     var go=async function(){
@@ -251,36 +323,175 @@ function bindLogin(){
     };
   }
 }
+function pad2(n){return String(n).padStart(2,'0');}
+function toLocalDT(iso){if(!iso)return '';var d=new Date(iso);if(isNaN(d.getTime()))return '';return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes());}
+function tf(label,path,ph){var v=gp(path);return '<label>'+label+'</label><input data-p="'+path+'" value="'+esc(v==null?'':v)+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>';}
+function tri(path,label,yes,no){
+  var v=gp(path),cur=typeof v==='boolean'?(v?'1':'0'):'';
+  return '<label>'+label+'</label><select data-pb="'+path+'"><option value=""'+(cur===''?' selected':'')+'>বদলাবে না</option><option value="1"'+(cur==='1'?' selected':'')+'>'+yes+'</option><option value="0"'+(cur==='0'?' selected':'')+'>'+no+'</option></select>';
+}
+function chk(path,label,on){var v=gp(path);var c=on?(v===true):(v!==false);return '<label class="chk"><input type="checkbox" data-pc="'+path+'"'+(c?' checked':'')+'> '+label+'</label>';}
+function schedHtml(pf){
+  var isN=pf==='n';
+  var g=function(k){return isN?S.notice[k]:gp(pf+'.'+k);};
+  var a=isN?'data-ndt':'data-dt';
+  var dt=function(k){return a+'="'+(isN?k:pf+'.'+k)+'" value="'+toLocalDT(g(k))+'"';};
+  var ro=isN?'data-n="rollout"':'data-p="'+pf+'.rollout"';
+  return '<div class="sch"><div class="sub"><b>⏱ সময়সূচি ও ধাপে ধাপে চালু</b></div><div class="row"><div><label>শুরু (ফাঁকা = এখনই)</label><input type="datetime-local" '+dt('startAt')+'></div><div><label>শেষ (ফাঁকা = চলতে থাকবে)</label><input type="datetime-local" '+dt('endAt')+'></div></div><label>কত % ফোনে চালু হবে (ফাঁকা = সবাই)</label><input inputmode="numeric" '+ro+' value="'+esc(g('rollout')==null?'':g('rollout'))+'" placeholder="যেমন 10"><div class="sub" style="margin-top:4px">প্রতিটা ফোনের একটা স্থায়ী নম্বর (০–৯৯) আছে; সেটা এই % এর কম হলে তবেই চালু। ১০% দিয়ে শুরু করে পরে বাড়ান।</div></div>';
+}
+function ruleHtml(r,i){
+  var h='<div class="card"><div class="top"><h2>নিয়ম '+(i+1)+'</h2><button class="bad" data-delrule="'+i+'">মুছুন</button></div><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"><div class="sub" style="margin-top:6px">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div><div class="row" style="flex-wrap:wrap">';
+  RULE_KEYS.forEach(function(k){h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
+  return h+'</div><div class="sub cp" data-cp="'+i+'" style="margin-top:8px"></div></div>';
+}
+var TABS=[['calc','হিসাব'],['ads','বিজ্ঞাপন'],['emerg','জরুরি'],['content','কনটেন্ট'],['note','নোটিশ'],['hist','ইতিহাস']];
+function viewMain(){
+  var h='<div class="top"><h1>⚙️ অ্যাডমিন প্যানেল</h1><div style="display:flex;gap:6px"><button class="ghost" id="reload">আবার লোড</button><button class="ghost" id="lock">লক</button></div></div>';
+  h+='<div class="tabs">'+TABS.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'on':'')+'">'+t[1]+'</button>';}).join('')+'</div>';
+  h+=msgHtml();
+  if(S.tab==='calc'){
+    h+='<div class="msg warn">সতর্কতা: ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।</div>';
+    h+='<div class="card"><label style="margin-top:0">নমুনা গ্রস বেতন (নিচের প্রতিটা নিয়মের ফল দেখতে)</label><input inputmode="numeric" data-pg="1" value="'+esc(S.pg)+'"></div>';
+    S.cfg.calc.forEach(function(r,i){h+=ruleHtml(r,i);});
+    if(!S.cfg.calc.length)h+='<div class="card sub">কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।</div>';
+    h+='<button class="ghost" id="addRule" style="width:100%">+ নতুন নিয়ম যোগ</button>';
+  }
+  if(S.tab==='ads'){
+    h+='<div class="card"><h2>বিজ্ঞাপনের সুইচ</h2><div class="sub">সর্বশেষ প্রকাশিত মানই ফোনে চলে। জরুরি হলে "বন্ধ" দিন।</div>'+tri('ads.salary','বেতন ট্যাব','চালু','বন্ধ')+tri('ads.workers','কর্মী ট্যাব','চালু','বন্ধ')+tri('ads.report','রিপোর্ট ট্যাব','চালু','বন্ধ')+tri('ads.banner','সব ব্যানার একসাথে','চালু','বন্ধ')+tri('ads.native','নেটিভ বিজ্ঞাপন','চালু','বন্ধ')+'</div>';
+    h+='<div class="card"><h2>বিজ্ঞাপন ইউনিট আইডি বদল</h2><div class="sub">ফাঁকা = অ্যাপের নিজের আইডি। শুধু নিজের AdMob আইডি দিন। পরীক্ষার আইডি দিলে নিজে বিজ্ঞাপনে ক্লিক করবেন না।</div>'+tf('OT ব্যানার','ads.ids.ot','ca-app-pub-…/…')+tf('বেতন ব্যানার','ads.ids.salary','ca-app-pub-…/…')+tf('কর্মী/রিপোর্ট ব্যানার','ads.ids.employee','ca-app-pub-…/…')+tf('নেটিভ (বেতন)','ads.ids.native','ca-app-pub-…/…')+'</div>';
+    h+='<div class="card"><h2>নতুন কর্মীর ডিফল্ট</h2><div class="sub">ফাঁকা = বদলাবে না</div><div class="row"><div>'+tf('নাইট রেট (৳)','defaults.nightRate')+'</div><div>'+tf('কার্যদিবস','defaults.workDays')+'</div></div>'+tri('defaults.bonusOn','বোনাস সুইচ (শুরুতে)','চালু','বন্ধ')+tf('বোনাসের ডিফল্ট পরিমাণ (৳)','defaults.bonusAmt')+'</div>';
+  }
+  if(S.tab==='emerg'){
+    h+='<div class="card"><h2>🛠️ রক্ষণাবেক্ষণ</h2><div class="sub">চালু করলে সব (বা নির্বাচিত %) ফোনে অ্যাপের উপর বার্তা আসবে, "আবার দেখুন" বাটন থাকবে।</div>'+chk('maint.on','রক্ষণাবেক্ষণ চালু',true)+'<label>বার্তা (ফাঁকা = ডিফল্ট)</label><textarea data-p="maint.msg" maxlength="300">'+esc(S.cfg.maint.msg||'')+'</textarea>'+schedHtml('maint')+'</div>';
+    h+='<div class="card"><h2>⬆️ ন্যূনতম সংস্করণ</h2><div class="sub">নরম = "পরে" বাটন থাকে। বাধ্যতামূলক = আপডেট না করলে অ্যাপ চলবে না।</div><div class="row"><div>'+tf('নরম আপডেট (এর নিচে)','min.soft','4.0.2')+'</div><div>'+tf('বাধ্যতামূলক (এর নিচে)','min.hard','4.0.1')+'</div></div><label>বার্তা (ফাঁকা = ডিফল্ট)</label><textarea data-p="min.msg" maxlength="300">'+esc(S.cfg.min.msg||'')+'</textarea>'+tf('আপডেট লিংক (ফাঁকা = প্লে স্টোর)','min.url','https://play.google.com/…')+schedHtml('min')+'</div>';
+    h+='<div class="card"><h2>🚦 ফিচার কিল সুইচ</h2><div class="sub">টিক সরালে ওই ফিচার বন্ধ। সব ঠিক থাকলে সব টিক রাখুন।</div>'+FLAG_KEYS.map(function(k){return chk('flags.'+k[0],k[1],false);}).join('')+schedHtml('flags')+'</div>';
+  }
+  if(S.tab==='content'){
+    h+='<div class="card"><h2>📅 দিবস তালিকা</h2><div class="sub">অ্যাপে স্থির তারিখের দিবস (২১ ফেব্রু, ২৫/২৬ মার্চ, ১৪ এপ্রিল, ১ মে, ১৪/১৬ ডিসেম্বর, ২৫ ডিসেম্বর) আগে থেকেই আছে। ঈদ, শবে বরাত, দুর্গাপূজা ইত্যাদি চান্দ্র/পরিবর্তনশীল দিবস এখানে যোগ করুন; আগামী ৩ মাসের মধ্যেরগুলো অ্যাপে দেখায় ও সকাল ৮টায় নোটিফিকেশন দেয়।</div>';
+    S.cfg.occ.forEach(function(e,i){h+='<div class="row" style="align-items:flex-end;margin-top:6px"><div style="flex:0 0 150px"><input type="date" data-occ="'+i+'" data-k="date" value="'+esc(e.date)+'"></div><div><input data-occ="'+i+'" data-k="title" maxlength="60" placeholder="দিবসের নাম" value="'+esc(e.title)+'"></div><button class="bad" style="flex:0 0 44px;padding:0" data-delocc="'+i+'">✕</button></div>';});
+    h+='<div style="margin-top:10px"><button class="ghost" id="addOcc" style="width:100%">+ দিবস যোগ</button></div></div>';
+    h+='<div class="card"><h2>📝 লেখা ও লিংক</h2><div class="sub">ফাঁকা = অ্যাপের নিজের মান</div><label>টিপ/বার্তা (হোম স্ক্রিনে এক লাইন, ট্যাপে লুকায়)</label><textarea data-p="texts.tip" maxlength="160">'+esc(S.cfg.texts.tip||'')+'</textarea>'+tf('WhatsApp শেয়ারের শিরোনাম','texts.share','📊 My Overtime Report')+tf('সাপোর্ট ইমেইল','texts.mail','rsa.akash@yahoo.com')+tf('সাপোর্ট WhatsApp (+8801… অথবা https লিংক)','texts.wa','+8801XXXXXXXXX')+tf('শর্তাবলী লিংক (লগইন পাতায়)','texts.terms','https://…')+tf('প্রাইভেসি পলিসি লিংক (লগইন পাতায়)','texts.privacy','https://…')+'</div>';
+    h+='<div class="card"><h2>⭐ রেটিং প্রম্পট</h2>'+tf('কতবার অ্যাপ খোলার পর (ফাঁকা = ২, ০ = কখনো না)','rate','2')+'</div>';
+  }
+  if(S.tab==='note'){
+    var n=S.notice;
+    h+='<div class="card"><label class="chk"><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'> নোটিশ চালু</label><label class="chk"><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'> ফোনে নোটিফিকেশনও পাঠান (একবার)</label>';
+    h+='<label>ধরন</label><select data-n="type">'+['info','success','warning','error'].map(function(t){var nm={info:'তথ্য',success:'সফল/আপডেট',warning:'সতর্কতা',error:'জরুরি'}[t];return '<option value="'+t+'"'+(n.type===t?' selected':'')+'>'+nm+'</option>';}).join('')+'</select>';
+    h+='<label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div class="row"><input data-n="date" value="'+esc(n.date)+'"><button class="ghost" id="newCode" style="flex:0 0 auto">নতুন কোড</button></div>';
+    h+='<label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea>';
+    h+='<label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2">'+schedHtml('n')+'</div>';
+  }
+  if(S.tab==='hist')return h+histHtml();
+  h+='<div id="pv">'+previewHtml()+'</div>';
+  var cur=S.tab==='note'?buildNotice():buildConfig();
+  h+='<div class="card"><div class="sub">প্রকাশের আগে এই ফাইল যাবে ('+(S.tab==='note'?'notice.json':'config.json')+'):</div><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></div>';
+  if(cur.errs.length)h+='<div class="msg bad" id="errbox">'+cur.errs.map(esc).join('<br>')+'</div>';
+  h+='<div class="bar"><div><button id="publish"'+((S.busy||cur.errs.length)?' disabled':'')+'>'+(S.busy?'পাঠানো হচ্ছে…':'🚀 প্রকাশ করুন ('+(S.tab==='note'?'নোটিশ':'কনফিগ')+')')+'</button></div></div>';
+  return h;
+}
+function fmtDT(iso){var d=new Date(iso);return isNaN(d.getTime())?iso:d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());}
+function histHtml(){
+  var H=S.hist,h='<div class="card"><div class="row"><button class="'+(H.file==='config.json'?'':'ghost')+'" data-hf="config.json">config.json</button><button class="'+(H.file==='notice.json'?'':'ghost')+'" data-hf="notice.json">notice.json</button></div><div class="sub" style="margin-top:8px">প্রতিটা প্রকাশ একটা সংস্করণ হিসেবে জমা থাকে। পুরনোটা ফর্মে এনে দেখে নিতে বা সরাসরি ফিরিয়ে দিতে পারেন।</div>';
+  if(H.file==='config.json')h+='<div class="msg warn" style="margin-bottom:0">মনে রাখুন: যে ফোনে হিসাবের নিয়ম আগেই পৌঁছেছে সেখান থেকে তা ফেরে না। ফিরিয়ে দিলে সুইচ, বিজ্ঞাপন, জরুরি ও কনটেন্ট আগের অবস্থায় যায়।</div>';
+  h+='</div>';
+  if(H.loading)return h+'<div class="card sub">লোড হচ্ছে…</div>';
+  if(!H.list)return h+'<div class="card"><button id="histLoad" style="width:100%">ইতিহাস দেখুন</button></div>';
+  if(!H.list.length)return h+'<div class="card sub">কোনো সংস্করণ পাওয়া যায়নি।</div>';
+  H.list.forEach(function(c,i){
+    h+='<div class="card"><div class="top" style="margin-bottom:6px"><div><b>'+esc(fmtDT(c.date))+(i===0?' · বর্তমান':'')+'</b><div class="sub">'+esc(c.msg)+' · '+esc(c.sha.slice(0,7))+'</div></div></div><div class="row"><button class="ghost" data-hv="'+c.sha+'">দেখুন</button><button class="ghost" data-hl="'+c.sha+'">ফর্মে আনুন</button>'+(i===0?'':'<button data-hr="'+c.sha+'">ফিরিয়ে দিন</button>')+'</div>';
+    if(H.view&&H.view.sha===c.sha)h+='<pre>'+esc(JSON.stringify(H.view.json,null,2))+'</pre>';
+    h+='</div>';
+  });
+  return h;
+}
+function render(){
+  if(!S.token){app.innerHTML=viewLogin();bindLogin();return;}
+  app.innerHTML=viewMain();bindMain();
+}
+function keep(fn){var y=window.scrollY;fn();render();window.scrollTo(0,y);}
+
+/* ---------- events ---------- */
+function $(id){return document.getElementById(id);}
+function qa(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn);}
 async function loadAll(){
   S.busy=true;setMsg('ok','লোড হচ্ছে…');render();
   try{
     var c=await getFile('config.json'),n=await getFile('notice.json');
-    S.cfgSha=c.sha;S.noticeSha=n.sha;loadModel(c.json,n.json);S.loaded=true;S.msg=null;
+    S.cfgSha=c.sha;S.noticeSha=n.sha;loadCfg(c.json);loadNotice(n.json);S.loaded=true;S.msg=null;S.hist.list=null;S.hist.view=null;
   }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
   S.busy=false;render();
+}
+async function loadHist(){
+  S.hist.loading=true;S.hist.view=null;render();
+  try{
+    var l=await gh('/repos/'+OWNER+'/'+REPO+'/commits?path='+S.hist.file+'&sha='+BRANCH+'&per_page=15');
+    S.hist.list=l.map(function(c){return {sha:c.sha,date:c.commit.author.date,msg:String(c.commit.message||'').split('\n')[0]};});
+  }catch(e){setMsg('bad',errText(e));S.hist.list=null;}
+  S.hist.loading=false;render();
+}
+async function histGet(sha){
+  var d=await gh('/repos/'+OWNER+'/'+REPO+'/contents/'+S.hist.file+'?ref='+sha);
+  return JSON.parse(b64ToUtf8(d.content));
 }
 function bindMain(){
   $('reload').onclick=function(){if(confirm('অসংরক্ষিত পরিবর্তন বাদ যাবে। আবার লোড করবেন?'))loadAll();};
   $('lock').onclick=function(){S.token=null;S.loaded=false;S.msg=null;render();};
-  Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'),function(b){b.onclick=function(){S.tab=b.getAttribute('data-tab');S.msg=null;render();};});
-  Array.prototype.forEach.call(document.querySelectorAll('[data-rule]'),function(el){
-    el.oninput=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-delrule]'),function(b){b.onclick=function(){if(confirm('এই নিয়ম তালিকা থেকে সরাবেন? (যে ফোনে আগেই পৌঁছেছে সেখান থেকে যাবে না)'))keep(function(){S.cfg.calc.splice(+b.getAttribute('data-delrule'),1);});};});
-  if($('addRule'))$('addRule').onclick=function(){keep(function(){var d=new Date();d.setMonth(d.getMonth()+1);var o={from:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};RULE_KEYS.forEach(function(k){o[k[0]]='';});S.cfg.calc.push(o);});};
-  Array.prototype.forEach.call(document.querySelectorAll('[data-ad]'),function(el){el.onchange=function(){var k=el.getAttribute('data-ad');if(el.value==='')delete S.cfg.ads[k];else S.cfg.ads[k]=el.value==='1';refreshPreview();};});
-  Array.prototype.forEach.call(document.querySelectorAll('[data-def]'),function(el){el.oninput=function(){S.cfg.defaults[el.getAttribute('data-def')]=el.value;refreshPreview();};});
-  Array.prototype.forEach.call(document.querySelectorAll('[data-n]'),function(el){
+  qa('[data-tab]',function(b){b.onclick=function(){S.tab=b.getAttribute('data-tab');S.msg=null;render();window.scrollTo(0,0);};});
+  qa('[data-rule]',function(el){el.oninput=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};});
+  qa('[data-delrule]',function(b){b.onclick=function(){if(confirm('এই নিয়ম তালিকা থেকে সরাবেন? (যে ফোনে আগেই পৌঁছেছে সেখান থেকে যাবে না)'))keep(function(){S.cfg.calc.splice(+b.getAttribute('data-delrule'),1);});};});
+  if($('addRule'))$('addRule').onclick=function(){keep(function(){var d=new Date();d.setMonth(d.getMonth()+1);var o={from:d.getFullYear()+'-'+pad2(d.getMonth()+1)};RULE_KEYS.forEach(function(k){o[k[0]]='';});S.cfg.calc.push(o);});};
+  qa('[data-pg]',function(el){el.oninput=function(){S.pg=el.value;refreshPreview();};});
+  qa('[data-p]',function(el){el.oninput=function(){sp(el.getAttribute('data-p'),el.value);refreshPreview();};});
+  qa('[data-pb]',function(el){el.onchange=function(){var p=el.getAttribute('data-pb');if(el.value==='')dp(p);else sp(p,el.value==='1');refreshPreview();};});
+  qa('[data-pc]',function(el){el.onchange=function(){sp(el.getAttribute('data-pc'),el.checked);refreshPreview();};});
+  qa('[data-dt]',function(el){el.onchange=function(){sp(el.getAttribute('data-dt'),el.value?new Date(el.value).toISOString():'');refreshPreview();};});
+  qa('[data-ndt]',function(el){el.onchange=function(){S.notice[el.getAttribute('data-ndt')]=el.value?new Date(el.value).toISOString():'';refreshPreview();};});
+  qa('[data-occ]',function(el){el.oninput=function(){S.cfg.occ[+el.getAttribute('data-occ')][el.getAttribute('data-k')]=el.value;refreshPreview();};});
+  qa('[data-delocc]',function(b){b.onclick=function(){keep(function(){S.cfg.occ.splice(+b.getAttribute('data-delocc'),1);});};});
+  if($('addOcc'))$('addOcc').onclick=function(){keep(function(){S.cfg.occ.push({date:'',title:''});});};
+  qa('[data-n]',function(el){
     var k=el.getAttribute('data-n');
     var h=function(){S.notice[k]=el.type==='checkbox'?el.checked:el.value;refreshPreview();};
     el.oninput=h;el.onchange=h;
   });
   if($('newCode'))$('newCode').onclick=function(){keep(function(){S.notice.date=newDate();});};
-  $('publish').onclick=publish;
+  qa('[data-hf]',function(b){b.onclick=function(){S.hist.file=b.getAttribute('data-hf');S.hist.list=null;S.hist.view=null;loadHist();};});
+  if($('histLoad'))$('histLoad').onclick=loadHist;
+  qa('[data-hv]',function(b){b.onclick=async function(){try{var j=await histGet(b.getAttribute('data-hv'));S.hist.view={sha:b.getAttribute('data-hv'),json:j};}catch(e){setMsg('bad',errText(e));}keep(function(){});};});
+  qa('[data-hl]',function(b){b.onclick=async function(){
+    try{
+      var j=await histGet(b.getAttribute('data-hl'));
+      if(S.hist.file==='config.json'){loadCfg(j);S.tab='calc';}else{loadNotice(j);S.tab='note';}
+      setMsg('warn','পুরনো সংস্করণ ফর্মে এসেছে। দেখে নিয়ে "প্রকাশ করুন" চাপলে তবেই ফোনে যাবে।');
+    }catch(e){setMsg('bad',errText(e));}
+    render();window.scrollTo(0,0);
+  };});
+  qa('[data-hr]',function(b){b.onclick=async function(){
+    if(!confirm('এই সংস্করণ এখনই প্রকাশ করে ফিরিয়ে দেবেন? ('+S.hist.file+')'))return;
+    S.busy=true;render();
+    try{
+      var j=await histGet(b.getAttribute('data-hr'));
+      var isN=S.hist.file==='notice.json';
+      var sha=await putFile(S.hist.file,j,isN?S.noticeSha:S.cfgSha,'admin: rollback '+S.hist.file+' to '+b.getAttribute('data-hr').slice(0,7));
+      if(isN){S.noticeSha=sha;loadNotice(j);}else{S.cfgSha=sha;loadCfg(j);}
+      setMsg('ok','✅ ফিরিয়ে দেওয়া হয়েছে ('+S.hist.file+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।');
+      S.hist.list=null;
+    }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
+    S.busy=false;render();window.scrollTo(0,0);
+  };});
+  if($('publish'))$('publish').onclick=publish;
+  refreshCalc();
+}
+function refreshCalc(){
+  var g=Number(S.pg);if(!isFinite(g)||g<=0)g=20000;
+  qa('.cp',function(el){var i=+el.getAttribute('data-cp');el.textContent=/^\d{4}-\d{2}$/.test(S.cfg.calc[i].from)?'নমুনা: '+calcAt(i,g):'';});
 }
 function refreshPreview(){
+  if(S.tab==='hist')return;
   var cur=S.tab==='note'?buildNotice():buildConfig();
   var pre=document.querySelector('pre');if(pre)pre.textContent=JSON.stringify(cur.obj,null,2);
+  var pv=$('pv');if(pv)pv.innerHTML=previewHtml();
+  refreshCalc();
   var b=$('publish');if(b)b.disabled=!!(S.busy||cur.errs.length);
   var old=document.getElementById('errbox');
   if(old)old.remove();
@@ -291,12 +502,23 @@ async function publish(){
   var cur=isNote?buildNotice():buildConfig();
   if(cur.errs.length)return;
   var name=isNote?'notice.json':'config.json';
-  if(!isNote&&!confirm('হিসাবের নিয়ম/সুইচ ফোনে পৌঁছে যাবে (নিয়ম স্থায়ী)। নিশ্চিত?'))return;
-  if(isNote&&!confirm('নোটিশ প্রকাশ করবেন?'))return;
+  var o=cur.obj,w=[];
+  if(isNote){
+    w.push('নোটিশ প্রকাশ করবেন?');
+    if(o.rollout!=null)w.push('শুধু '+o.rollout+'% ফোনে যাবে।');
+  }else{
+    w.push('সুইচ/সেটিং ফোনে পৌঁছে যাবে (হিসাবের নিয়ম স্থায়ী)।');
+    if(o.maint)w.push('⚠️ রক্ষণাবেক্ষণ চালু: '+(o.maint.rollout!=null?o.maint.rollout+'% ফোনে':'সব ফোনে')+' অ্যাপ ব্যবহার করা যাবে না!');
+    if(o.min&&o.min.hard)w.push('⚠️ সংস্করণ '+o.min.hard+' এর নিচের সবাই অ্যাপ ব্যবহার করতে পারবে না, আপডেট লাগবে!');
+    if(o.flags)w.push('বন্ধ হবে: '+FLAG_KEYS.filter(function(k){return o.flags[k[0]]===false;}).map(function(k){return k[1];}).join(', '));
+    if(o.ads&&o.ads.ids)w.push('বিজ্ঞাপন আইডি বদলাচ্ছে।');
+  }
+  if(!confirm(w.join('\n')+'\n\nনিশ্চিত?'))return;
   S.busy=true;S.msg=null;render();
   try{
-    var sha=await putFile(name,cur.obj,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
+    var sha=await putFile(name,o,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
     if(isNote)S.noticeSha=sha;else S.cfgSha=sha;
+    S.hist.list=null;
     setMsg('ok','✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।');
   }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
   S.busy=false;render();window.scrollTo(0,0);
