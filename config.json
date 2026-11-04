@@ -5,8 +5,9 @@
       "allowance": 2450,
       "basicDiv": 3,
       "basicMul": 2,
-      "otDiv": 54,
-      "dayDiv": 30
+      "otDiv": 50,
+      "dayDiv": 30,
+      "exact": 0
     }
   ]
 }
