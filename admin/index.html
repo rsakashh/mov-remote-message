@@ -53,14 +53,14 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding
 var OWNER='rsakashh',REPO='mov-remote-message',BRANCH='main';
 var LS='ds_admin_v1';
 var RULE_KEYS=[
- ['allowance','ভাতা (এখন ২৪৫০)',0,100000],
- ['basicDiv','বেসিক ভাগ (এখন ৩)',0.5,20],
- ['basicMul','বেসিক গুণ (এখন ২)',0.1,20],
- ['dayDiv','কর্তনের দিন (এখন ৩০)',20,31],
- ['otNum','OT গুণক (এখন ২)',0.5,10],
- ['otDiv','OT ভাগ (এখন ১০৪)',26,400]
+ ['allowance','অন্যান্য খরচ / Others spend (এখন ২৪৫০)',0,100000],
+ ['basicDiv','রুম রেন্ট = মিড ÷ কত (এখন ৩)',0.5,20],
+ ['basicMul','বেসিক = রুম রেন্ট × কত (এখন ২)',0.1,20],
+ ['otDiv','OT রেট = বেসিক ÷ কত (এখন ১০৪)',26,400],
+ ['dayDiv','অনুপস্থিতি রেট = বেসিক ÷ কত (এখন ৩০)',20,31],
+ ['exact','হিসাবের পদ্ধতি',0,1]
 ];
-var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{ids:{}},defaults:{},flags:{},min:{},maint:{},texts:{},occ:[],rate:''},cfgSha:null,notice:null,noticeSha:null,loaded:false,pg:'20000',hist:{file:'config.json',list:null,loading:false,view:null}};
+var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{ids:{}},defaults:{},flags:{},min:{},maint:{},texts:{},occ:[],rate:''},cfgSha:null,notice:null,noticeSha:null,loaded:false,pg:'16000',hist:{file:'config.json',list:null,loading:false,view:null}};
 var app=document.getElementById('app');
 var enc=new TextEncoder(),dec=new TextDecoder();
 
@@ -118,7 +118,7 @@ async function putFile(name,obj,sha,message){
 }
 
 /* ---------- model <-> form ---------- */
-var DEF={allowance:2450,basicDiv:3,basicMul:2,dayDiv:30,otNum:2,otDiv:104};
+var DEF={allowance:2450,basicDiv:3,basicMul:2,dayDiv:30,otNum:2,otDiv:104,exact:0};
 var FLAG_KEYS=[['pdf','PDF ও WhatsApp শেয়ার'],['cloud','ক্লাউড সিঙ্ক'],['backup','ব্যাকআপ ও রিস্টোর'],['raise','বেতন বৃদ্ধি ক্যালকুলেটর'],['reminders','রিমাইন্ডার ও নোটিফিকেশন']];
 var NT_COL={info:'#3b82f6',success:'#10b981',warning:'#f59e0b',error:'#ef4444'};
 function ob(x){return x&&typeof x==='object'&&!Array.isArray(x)?JSON.parse(JSON.stringify(x)):{};}
@@ -275,14 +275,20 @@ function previewHtml(){
   }
   return h?'<div class="sub" style="margin-top:12px">📱 ফোনে যেমন দেখাবে (আনুমানিক):</div>'+phone(h):'';
 }
-function calcAt(idx,g){
+function effP(target){
   var p={};for(var k in DEF)p[k]=DEF[k];
-  var target=S.cfg.calc[idx].from;
+  if(target>='2026-11')p.exact=1;
   S.cfg.calc.filter(function(r){return /^\d{4}-\d{2}$/.test(r.from)&&r.from<=target;}).sort(function(a,b){return a.from<b.from?-1:1;}).forEach(function(r){RULE_KEYS.forEach(function(k){var v=String(r[k[0]]).trim();if(v!==''&&isFinite(Number(v)))p[k[0]]=Number(v);});});
-  var basic=Math.round(((g-p.allowance)/p.basicDiv)*p.basicMul);
-  var ot=Math.round((((g-p.allowance)/p.basicDiv)*(p.otNum/p.otDiv))*100)/100;
-  return 'গ্রস '+g+' ⇒ বেসিক '+basic+' · OT রেট/ঘণ্টা '+ot+' · দিনের কর্তন '+(Math.round(basic/p.dayDiv*100)/100);
+  return p;
 }
+function t4(x){return Math.floor(x*10000+1e-7)/10000;}
+function steps(g,p){
+  var mid=g-p.allowance,room,basic,ot,ab;
+  if(p.exact){room=Math.floor(mid/p.basicDiv);basic=room*p.basicMul;ot=t4(basic/p.otDiv);ab=t4(basic/p.dayDiv);}
+  else{room=Math.round(mid/p.basicDiv*100)/100;basic=Math.round(mid/p.basicDiv*p.basicMul);ot=Math.round(mid/p.basicDiv*(p.otNum/p.otDiv)*100)/100;ab=basic/p.dayDiv;}
+  return 'গ্রস বেতন = '+g+'<br>অন্যান্য খরচ = '+p.allowance+'<br>মিড বেতন = '+g+' − '+p.allowance+' = '+mid+'<br>রুম রেন্ট = '+mid+' ÷ '+p.basicDiv+' = '+room+'<br>বেসিক বেতন = '+room+' × '+p.basicMul+' = '+basic+'<br>ওভারটাইম রেট = '+basic+' ÷ '+p.otDiv+' = '+ot+'<br>অনুপস্থিতি রেট = '+basic+' ÷ '+p.dayDiv+' = '+ab+(p.exact?'':'<br><i>(পুরনো পদ্ধতি: রাউন্ড করা)</i>');
+}
+function calcAt(idx,g){return steps(g,effP(S.cfg.calc[idx].from));}
 
 /* ---------- rendering ---------- */
 function msgHtml(){if(!S.msg)return '';return '<div class="msg '+S.msg.k+'">'+esc(S.msg.t)+'</div>';}
@@ -341,8 +347,9 @@ function schedHtml(pf){
 }
 function ruleHtml(r,i){
   var h='<div class="card"><div class="top"><h2>নিয়ম '+(i+1)+'</h2><button class="bad" data-delrule="'+i+'">মুছুন</button></div><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"><div class="sub" style="margin-top:6px">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div><div class="row" style="flex-wrap:wrap">';
-  RULE_KEYS.forEach(function(k){h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
-  return h+'</div><div class="sub cp" data-cp="'+i+'" style="margin-top:8px"></div></div>';
+  RULE_KEYS.forEach(function(k){if(k[0]==='exact')return;h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
+  var ex=String(r.exact==null?'':r.exact);
+  return h+'</div><label>হিসাবের পদ্ধতি</label><select data-rule="'+i+'" data-k="exact"><option value=""'+(ex===''?' selected':'')+'>বদলাবে না (নভেম্বর ২০২৬ থেকে নতুন, আগে পুরনো)</option><option value="1"'+(ex==='1'?' selected':'')+'>নতুন: ভাগফল ছেঁটে (খাতার সূত্র)</option><option value="0"'+(ex==='0'?' selected':'')+'>পুরনো: রাউন্ড করে</option></select><div class="sub cp" data-cp="'+i+'" style="margin-top:10px;line-height:1.8"></div></div>';
 }
 var TABS=[['calc','হিসাব'],['ads','বিজ্ঞাপন'],['emerg','জরুরি'],['content','কনটেন্ট'],['note','নোটিশ'],['hist','ইতিহাস']];
 function viewMain(){
@@ -351,7 +358,7 @@ function viewMain(){
   h+=msgHtml();
   if(S.tab==='calc'){
     h+='<div class="msg warn">সতর্কতা: ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।</div>';
-    h+='<div class="card"><label style="margin-top:0">নমুনা গ্রস বেতন (নিচের প্রতিটা নিয়মের ফল দেখতে)</label><input inputmode="numeric" data-pg="1" value="'+esc(S.pg)+'"></div>';
+    h+='<div class="card"><h2>📒 হিসাবের সূত্র (চলতি মাস)</h2><div class="sub" id="fx" style="line-height:1.8;margin-top:6px"></div><div class="sub" style="margin-top:8px">নভেম্বর ২০২৬ থেকে এই সূত্র (ভাগফলের ভগ্নাংশ বাদ) আপনা-আপনি চলে, আগের মাস আগের মতোই থাকে। "অন্যান্য খরচ" শুধু এখান থেকেই বদলানো যায়।</div><label>নমুনা গ্রস বেতন (নিচের সব ফল এটা দিয়ে দেখায়)</label><input inputmode="numeric" data-pg="1" value="'+esc(S.pg)+'"></div>';
     S.cfg.calc.forEach(function(r,i){h+=ruleHtml(r,i);});
     if(!S.cfg.calc.length)h+='<div class="card sub">কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।</div>';
     h+='<button class="ghost" id="addRule" style="width:100%">+ নতুন নিয়ম যোগ</button>';
@@ -437,7 +444,7 @@ function bindMain(){
   $('reload').onclick=function(){if(confirm('অসংরক্ষিত পরিবর্তন বাদ যাবে। আবার লোড করবেন?'))loadAll();};
   $('lock').onclick=function(){S.token=null;S.loaded=false;S.msg=null;render();};
   qa('[data-tab]',function(b){b.onclick=function(){S.tab=b.getAttribute('data-tab');S.msg=null;render();window.scrollTo(0,0);};});
-  qa('[data-rule]',function(el){el.oninput=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};});
+  qa('[data-rule]',function(el){var f=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};el.oninput=f;el.onchange=f;});
   qa('[data-delrule]',function(b){b.onclick=function(){if(confirm('এই নিয়ম তালিকা থেকে সরাবেন? (যে ফোনে আগেই পৌঁছেছে সেখান থেকে যাবে না)'))keep(function(){S.cfg.calc.splice(+b.getAttribute('data-delrule'),1);});};});
   if($('addRule'))$('addRule').onclick=function(){keep(function(){var d=new Date();d.setMonth(d.getMonth()+1);var o={from:d.getFullYear()+'-'+pad2(d.getMonth()+1)};RULE_KEYS.forEach(function(k){o[k[0]]='';});S.cfg.calc.push(o);});};
   qa('[data-pg]',function(el){el.oninput=function(){S.pg=el.value;refreshPreview();};});
@@ -483,8 +490,9 @@ function bindMain(){
   refreshCalc();
 }
 function refreshCalc(){
-  var g=Number(S.pg);if(!isFinite(g)||g<=0)g=20000;
-  qa('.cp',function(el){var i=+el.getAttribute('data-cp');el.textContent=/^\d{4}-\d{2}$/.test(S.cfg.calc[i].from)?'নমুনা: '+calcAt(i,g):'';});
+  var g=Number(S.pg);if(!isFinite(g)||g<=0)g=16000;
+  var fx=$('fx');if(fx){var d=new Date(),t=d.getFullYear()+'-'+pad2(d.getMonth()+1);fx.innerHTML='<b>'+t+' মাসের হিসাব</b><br>'+steps(g,effP(t));}
+  qa('.cp',function(el){var i=+el.getAttribute('data-cp');el.innerHTML=/^\d{4}-\d{2}$/.test(S.cfg.calc[i].from)?'<b>'+S.cfg.calc[i].from+' থেকে নমুনা</b><br>'+calcAt(i,g):'';});
 }
 function refreshPreview(){
   if(S.tab==='hist')return;
