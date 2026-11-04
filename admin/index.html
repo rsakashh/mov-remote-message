@@ -117,6 +117,38 @@ async function putFile(name,obj,sha,message){
   return d.content.sha;
 }
 
+/* ---------- app repo sync (remote-defaults.json) ---------- */
+var APP={owner:'rsakashh',repo:'my-overtime-v2',branch:'ui-redesign',file:'remote-defaults.json'};
+function bakedFrom(obj){
+  var o={_note:'Written by the admin panel. Do not edit by hand.'};
+  ['calc','ads','defaults','occ'].forEach(function(k){if(obj[k]!==undefined)o[k]=obj[k];});
+  if(obj.texts){var t={};['mail','wa','terms','privacy','share'].forEach(function(k){if(obj.texts[k])t[k]=obj.texts[k];});if(Object.keys(t).length)o.texts=t;}
+  if(obj.rate!==undefined)o.rate=obj.rate;
+  return o;
+}
+async function syncApp(obj){
+  var path='/repos/'+APP.owner+'/'+APP.repo+'/contents/'+APP.file;
+  var cur=null;
+  try{cur=await gh(path+'?ref='+APP.branch);}catch(e){if(e.status!==404)throw e;}
+  var text=JSON.stringify(bakedFrom(obj),null,2)+'\n';
+  if(cur&&cur.content&&b64ToUtf8(cur.content)===text)return 'same';
+  var body={message:'remote-defaults: update from admin panel',content:utf8ToB64(text),branch:APP.branch};
+  if(cur&&cur.sha)body.sha=cur.sha;
+  await gh(path,{method:'PUT',body:body});
+  return 'saved';
+}
+function appErr(e){
+  if(e.status===401||e.status===403||e.status===404)return 'টোকেনে অ্যাপ রিপো ('+APP.repo+') এর Contents: Read and write অনুমতি দিন, আর ব্রাঞ্চ '+APP.branch+' আছে কিনা দেখুন ('+e.message+')';
+  return errText(e);
+}
+async function trySync(obj){
+  try{var r=await syncApp(obj);return {k:'ok',t:r==='same'?' অ্যাপ রিপোতে আগেই এই অবস্থায় আছে।':' অ্যাপ রিপোতেও (remote-defaults.json) সেভ হয়েছে, নতুন বিল্ডে ঢুকবে।'};}
+  catch(e){return {k:'warn',t:' ⚠️ কিন্তু অ্যাপ রিপোতে সেভ হয়নি: '+appErr(e)};}
+}
+function appSyncCard(){
+  return '<div class="card"><h2>📦 অ্যাপ রিপো সিঙ্ক</h2><div class="sub">প্রতিবার কনফিগ প্রকাশ করলে এটা নিজে নিজেই হয়। প্রথমবার বা হাতে করতে চাইলে সর্বশেষ প্রকাশিত config.json থেকে '+APP.file+' বানিয়ে '+APP.repo+' ('+APP.branch+') রিপোতে রাখুন। নতুন বিল্ডের আগে ফোনে <b>git pull</b> করে নেবেন।</div><div style="margin-top:10px"><button id="appSync" style="width:100%">এখনই সিঙ্ক করুন</button></div></div>';
+}
+
 /* ---------- model <-> form ---------- */
 var DEF={allowance:2450,basicDiv:3,basicMul:2,dayDiv:30,otNum:2,otDiv:104,exact:0};
 var FLAG_KEYS=[['pdf','PDF ও WhatsApp শেয়ার'],['cloud','ক্লাউড সিঙ্ক'],['backup','ব্যাকআপ ও রিস্টোর'],['raise','বেতন বৃদ্ধি ক্যালকুলেটর'],['reminders','রিমাইন্ডার ও নোটিফিকেশন']];
@@ -388,7 +420,7 @@ function viewMain(){
     h+='<label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea>';
     h+='<label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2">'+schedHtml('n')+'</div>';
   }
-  if(S.tab==='hist')return h+histHtml();
+  if(S.tab==='hist')return h+appSyncCard()+histHtml();
   h+='<div id="pv">'+previewHtml()+'</div>';
   var cur=S.tab==='note'?buildNotice():buildConfig();
   h+='<div class="card"><div class="sub">প্রকাশের আগে এই ফাইল যাবে ('+(S.tab==='note'?'notice.json':'config.json')+'):</div><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></div>';
@@ -464,6 +496,12 @@ function bindMain(){
   if($('newCode'))$('newCode').onclick=function(){keep(function(){S.notice.date=newDate();});};
   qa('[data-hf]',function(b){b.onclick=function(){S.hist.file=b.getAttribute('data-hf');S.hist.list=null;S.hist.view=null;loadHist();};});
   if($('histLoad'))$('histLoad').onclick=loadHist;
+  if($('appSync'))$('appSync').onclick=async function(){
+    S.busy=true;render();
+    try{var f=await getFile('config.json');S.cfgSha=f.sha;var ar=await trySync(f.json||{});setMsg(ar.k,'config.json থেকে:'+ar.t);}
+    catch(e){setMsg('bad',errText(e));}
+    S.busy=false;render();window.scrollTo(0,0);
+  };
   qa('[data-hv]',function(b){b.onclick=async function(){try{var j=await histGet(b.getAttribute('data-hv'));S.hist.view={sha:b.getAttribute('data-hv'),json:j};}catch(e){setMsg('bad',errText(e));}keep(function(){});};});
   qa('[data-hl]',function(b){b.onclick=async function(){
     try{
@@ -481,7 +519,9 @@ function bindMain(){
       var isN=S.hist.file==='notice.json';
       var sha=await putFile(S.hist.file,j,isN?S.noticeSha:S.cfgSha,'admin: rollback '+S.hist.file+' to '+b.getAttribute('data-hr').slice(0,7));
       if(isN){S.noticeSha=sha;loadNotice(j);}else{S.cfgSha=sha;loadCfg(j);}
-      setMsg('ok','✅ ফিরিয়ে দেওয়া হয়েছে ('+S.hist.file+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।');
+      var rk='ok',rt='✅ ফিরিয়ে দেওয়া হয়েছে ('+S.hist.file+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।';
+      if(!isN){var rr=await trySync(j);rk=rr.k;rt+=rr.t;}
+      setMsg(rk,rt);
       S.hist.list=null;
     }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
     S.busy=false;render();window.scrollTo(0,0);
@@ -527,7 +567,9 @@ async function publish(){
     var sha=await putFile(name,o,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
     if(isNote)S.noticeSha=sha;else S.cfgSha=sha;
     S.hist.list=null;
-    setMsg('ok','✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।');
+    var mk='ok',mt='✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।';
+    if(!isNote){var ar=await trySync(o);mk=ar.k;mt+=ar.t;}
+    setMsg(mk,mt);
   }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
   S.busy=false;render();window.scrollTo(0,0);
 }
