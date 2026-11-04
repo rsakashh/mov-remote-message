@@ -1,13 +1,12 @@
 {
   "calc": [
     {
-      "from": "2026-11",
+      "from": "2026-10",
       "allowance": 2450,
       "basicDiv": 3,
       "basicMul": 2,
-      "dayDiv": 30,
-      "otNum": 2,
-      "otDiv": 104
+      "otDiv": 50,
+      "dayDiv": 30
     }
   ]
 }
