@@ -9,5 +9,9 @@
       "dayDiv": 30,
       "exact": 0
     }
-  ]
+  ],
+  "texts": {
+    "share": "My Overtime: A to Z   |   STARKAR"
+  },
+  "rate": 1
 }
