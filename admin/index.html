@@ -2,51 +2,202 @@
 <html lang="bn">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>অ্যাডমিন প্যানেল</title>
+<meta name="color-scheme" content="light dark">
+<title>অ্যাডমিন কনসোল · My Overtime</title>
 <style>
-:root{--bg:#f5f3ff;--card:#fff;--ink:#1e1b4b;--sub:#6b7280;--line:#e5e7eb;--ac:#6d28d9;--ac2:#7c3aed;--ok:#059669;--bad:#dc2626;--warn:#b45309;--chip:#ede9fe}
-@media (prefers-color-scheme:dark){:root{--bg:#0f0a1e;--card:#1a1330;--ink:#ede9fe;--sub:#a5a1c2;--line:#2e2750;--ac:#a78bfa;--ac2:#8b5cf6;--ok:#34d399;--bad:#f87171;--warn:#fbbf24;--chip:#2a2050}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
-.wrap{max-width:720px;margin:0 auto;padding:16px 16px 96px}
-h1{font-size:20px;margin:0}
-h2{font-size:17px;margin:0 0 4px}
-.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
-.sub{color:var(--sub);font-size:13px}
-label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px}
-input,select,textarea{width:100%;min-height:44px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
-textarea{min-height:88px;resize:vertical}
-input[type=checkbox]{width:22px;min-height:22px;height:22px}
-.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}
-.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;color:var(--ink);margin:0}
-button{min-height:44px;padding:0 16px;border-radius:12px;border:0;font:inherit;font-weight:700;cursor:pointer;background:var(--ac2);color:#fff}
-button.ghost{background:var(--chip);color:var(--ac)}
-button.bad{background:transparent;color:var(--bad);border:1px solid var(--line)}
-button:disabled{opacity:.5}
-.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
-.tabs button{flex:1;white-space:nowrap;background:var(--card);color:var(--sub);border:1px solid var(--line)}
-.tabs button.on{background:var(--ac2);color:#fff;border-color:var(--ac2)}
-.msg{padding:10px 12px;border-radius:12px;font-size:14px;margin:10px 0}
-.msg.ok{background:rgba(5,150,105,.12);color:var(--ok)}.msg.bad{background:rgba(220,38,38,.12);color:var(--bad)}.msg.warn{background:rgba(180,83,9,.12);color:var(--warn)}
-pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px;overflow:auto;font-size:12px;margin:8px 0 0}
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;justify-content:center}
-.bar>div{max-width:720px;width:100%;display:flex;gap:10px}.bar button{flex:1}
-.hide{display:none}
-.phone{max-width:300px;margin:8px auto 14px;border:6px solid #111;border-radius:30px;background:#0a0015;color:#fff;padding:16px 12px;min-height:150px;font-size:14px}
+:root{color-scheme:light;
+--bg:#f4f3fa;--glass:rgba(244,243,250,.86);--card:#fff;--field:#f6f5fc;--segon:#fff;--ink:#17142e;--sub:#5f5c80;--faint:#9693b2;--line:rgba(35,25,90,.12);--line2:rgba(35,25,90,.065);
+--ac:#5b2ee0;--btn:#5b2ee0;--acsoft:rgba(91,46,224,.09);--seam:rgba(91,46,224,.38);
+--ok:#0b8a5d;--oksoft:rgba(11,138,93,.11);--bad:#d12c45;--badsoft:rgba(209,44,69,.09);--warn:#9a5900;--warnsoft:rgba(245,158,11,.15);--info:#2257d6;--infosoft:rgba(34,87,214,.09);
+--sh:0 1px 2px rgba(40,25,110,.05),0 14px 30px -18px rgba(40,25,110,.30)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0b0919;--glass:rgba(11,9,25,.82);--card:#15112d;--field:rgba(255,255,255,.05);--segon:rgba(255,255,255,.13);--ink:#efecff;--sub:#a5a2c8;--faint:#72708f;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.055);
+--ac:#a995ff;--btn:#7c4dff;--acsoft:rgba(139,112,255,.17);--seam:rgba(169,149,255,.42);
+--ok:#34d399;--oksoft:rgba(52,211,153,.13);--bad:#fb7185;--badsoft:rgba(251,113,133,.13);--warn:#fbbf24;--warnsoft:rgba(251,191,36,.13);--info:#82a8ff;--infosoft:rgba(130,168,255,.13);
+--sh:0 1px 0 rgba(255,255,255,.04) inset,0 16px 32px -20px rgba(0,0,0,.8)}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0b0919;--glass:rgba(11,9,25,.82);--card:#15112d;--field:rgba(255,255,255,.05);--segon:rgba(255,255,255,.13);--ink:#efecff;--sub:#a5a2c8;--faint:#72708f;--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.055);
+--ac:#a995ff;--btn:#7c4dff;--acsoft:rgba(139,112,255,.17);--seam:rgba(169,149,255,.42);
+--ok:#34d399;--oksoft:rgba(52,211,153,.13);--bad:#fb7185;--badsoft:rgba(251,113,133,.13);--warn:#fbbf24;--warnsoft:rgba(251,191,36,.13);--info:#82a8ff;--infosoft:rgba(130,168,255,.13);
+--sh:0 1px 0 rgba(255,255,255,.04) inset,0 16px 32px -20px rgba(0,0,0,.8)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:15px/1.6 "Hind Siliguri","Noto Sans Bengali",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+svg.ic{width:20px;height:20px;flex:none}
+h1,h2{margin:0;font-weight:700}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px calc(124px + env(safe-area-inset-bottom))}
+.mt{margin-top:14px}.center{text-align:center}
+.sub{color:var(--sub);font-size:13px;line-height:1.55}
+.hint{color:var(--faint);font-size:12px;line-height:1.5;margin-top:6px}
+
+/* header + nav */
+.hd{position:sticky;top:0;z-index:30;background:var(--glass);-webkit-backdrop-filter:saturate(1.5) blur(16px);backdrop-filter:saturate(1.5) blur(16px);border-bottom:1px solid var(--line2)}
+.hi{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px 4px}
+.bm{position:relative;width:42px;height:42px;border-radius:14px;background:var(--btn);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;letter-spacing:.02em;flex:none;box-shadow:0 10px 20px -10px var(--btn)}
+.bm::after{content:"";position:absolute;inset:4px;border-radius:10px;border:1.5px dashed rgba(255,255,255,.55);pointer-events:none}
+.ht{flex:1;min-width:0}.ht h1{font-size:17px;line-height:1.25}
+.hs{font-size:11.5px;color:var(--faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ha{display:flex;gap:8px}
+.ib{width:40px;height:40px;min-height:0;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--sub);display:grid;place-items:center;cursor:pointer;transition:transform .15s,color .15s}
+.ib:active{transform:scale(.93)}.ib:hover{color:var(--ac)}.ib.dng{color:var(--bad)}
+.nav{position:relative;display:flex;gap:4px;overflow-x:auto;padding:8px 16px 12px;max-width:760px;margin:0 auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nv{position:relative;flex:none;display:flex;align-items:center;gap:7px;min-height:40px;padding:0 14px;border-radius:12px;border:0;background:transparent;color:var(--sub);font-size:14px;font-weight:600;cursor:pointer;transition:background .2s,color .2s}
+.nv .ic{width:18px;height:18px}
+.nv.on{background:var(--ink);color:var(--bg)}
+.nv:not(.on):hover{background:var(--acsoft);color:var(--ac)}
+.dt{position:absolute;top:6px;right:5px;width:8px;height:8px;border-radius:50%;display:none;border:2px solid var(--bg)}
+.dt.bad{display:block;background:var(--bad)}.dt.warn{display:block;background:#f59e0b}.dt.ok{display:block;background:var(--ok)}
+
+/* panels */
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:var(--sh);margin-bottom:16px}
+.ch{display:flex;align-items:flex-start;gap:12px;padding:16px 16px 2px}
+.ci{width:38px;height:38px;border-radius:12px;background:var(--acsoft);color:var(--ac);display:grid;place-items:center;flex:none}
+.ct{flex:1;min-width:0}.ct h2{font-size:16.5px;line-height:1.35}.ct .sub{margin-top:1px}
+.cb{padding:6px 16px 16px}
+.al{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;font-size:13.5px;line-height:1.6;margin:0 0 16px;border:1px solid transparent}
+.cb .al{margin:14px 0 0}
+.al .ic{width:18px;height:18px;margin-top:3px}
+.al.ok{background:var(--oksoft);color:var(--ok);border-color:rgba(11,138,93,.22)}
+.al.bad{background:var(--badsoft);color:var(--bad);border-color:rgba(209,44,69,.22)}
+.al.warn{background:var(--warnsoft);color:var(--warn);border-color:rgba(245,158,11,.3)}
+.al.info{background:var(--infosoft);color:var(--info);border-color:rgba(34,87,214,.2)}
+
+/* fields */
+label{display:block;font-size:12.5px;font-weight:600;color:var(--sub);margin:0 0 6px}
+.f{margin-top:14px}
+input,select,textarea{width:100%;min-height:46px;padding:10px 13px;border-radius:12px;border:1px solid var(--line);background:var(--field);color:var(--ink);font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 4px var(--acsoft)}
+::placeholder{color:var(--faint)}
+textarea{min-height:92px;resize:vertical;line-height:1.55}
+select{appearance:none;-webkit-appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b88a8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;align-items:end}
+@media(max-width:340px){.g2{grid-template-columns:1fr}}
+.cp{margin-top:6px}
+
+/* switches + segmented */
+.sw{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:54px;margin:0;border-top:1px solid var(--line2);font-size:15px;font-weight:500;color:var(--ink);cursor:pointer}
+.sw input{appearance:none;-webkit-appearance:none;width:48px;height:28px;min-height:0;padding:0;border-radius:99px;border:0;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.sw input:checked{background:var(--btn)}
+.sw input:checked::after{transform:translateX(20px)}
+.sw input:focus-visible{outline:2px solid var(--ac);outline-offset:2px;box-shadow:none}
+.tr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line2)}
+.tl2{flex:1;min-width:0;font-size:15px;font-weight:500}
+.seg{display:flex;gap:3px;padding:3px;border-radius:13px;background:var(--field);border:1px solid var(--line2)}
+.seg button{flex:1;min-height:36px;padding:0 10px;border-radius:10px;border:0;background:transparent;color:var(--sub);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.seg button.on{background:var(--segon);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.seg button.on.y,.seg button.on.t-success{background:var(--oksoft);color:var(--ok);box-shadow:none}
+.seg button.on.n,.seg button.on.t-error{background:var(--badsoft);color:var(--bad);box-shadow:none}
+.seg button.on.t-info{background:var(--infosoft);color:var(--info);box-shadow:none}
+.seg button.on.t-warning{background:var(--warnsoft);color:var(--warn);box-shadow:none}
+.seg.g4{display:grid;grid-template-columns:1fr 1fr}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:13px;border:1px solid transparent;font-weight:700;font-size:15px;cursor:pointer;color:#fff;background:var(--btn);transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--acsoft);color:var(--ac)}
+.btn.line{background:transparent;color:var(--sub);border-color:var(--line)}
+.btn.danger{background:var(--badsoft);color:var(--bad)}
+.btn.seam{background:transparent;color:var(--ac);border:1.5px dashed var(--seam)}
+.btn.sm{min-height:38px;padding:0 12px;font-size:13.5px;border-radius:11px}
+.btn.full{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.busy::before{content:"";width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.brow{display:flex;gap:8px;margin-top:12px}.brow .btn{flex:1;padding:0 8px}
+
+/* publish bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--glass);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);border-top:1px solid var(--line2)}
+.bi{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.st{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.st b{font-size:13.5px;display:flex;align-items:center;gap:8px}
+.st small{font-size:11.5px;color:var(--faint);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding-left:16px}
+.dd{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.dd.on{background:#f59e0b;box-shadow:0 0 0 4px var(--warnsoft)}
+.bar .btn{flex:none;min-width:148px}
+
+/* collapsible blocks */
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+.cv{margin-left:auto;transition:transform .2s;color:var(--faint)}
+details[open]>summary .cv{transform:rotate(180deg)}
+.sch{margin-top:18px;border:1.5px dashed var(--seam);border-radius:16px}
+.sch>summary{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;font-weight:600;font-size:14px;color:var(--ac)}
+.sch>summary .ic{width:18px;height:18px}
+.sb{padding:0 14px 14px}
+.bg{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--acsoft);color:var(--ac)}
+details.code>summary{display:flex;align-items:center;gap:10px;padding:15px 16px;font-weight:600;font-size:14px}
+details.code>summary .ic{color:var(--ac)}
+.jsz{font-size:11.5px;color:var(--faint);font-weight:500;margin-left:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+details.code>summary .cv{margin-left:8px}
+pre{margin:0 16px 16px;background:#0e0a22;color:#d9d3ff;border-radius:14px;padding:14px;overflow:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:340px}
+
+/* payslip formula */
+.fh{font-weight:700;font-size:13.5px;margin-top:14px;color:var(--ink)}
+.fl{position:relative;margin-top:10px;padding:6px 14px 10px;background:var(--field);border:1px solid var(--line2);border-radius:14px}
+.fl::before,.fl::after{content:"";position:absolute;left:14px;right:14px;height:0;border-top:1.5px dashed var(--seam)}
+.fl::before{top:0}.fl::after{bottom:0}
+.fr{display:flex;align-items:baseline;gap:8px;padding:7px 0;font-size:13.5px}
+.fk{color:var(--sub);flex:none}
+.fr::after{content:"";order:1;flex:1;border-bottom:1.5px dotted var(--line);transform:translateY(-3px);min-width:12px}
+.fv{order:2;text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.fv i{font-style:normal;color:var(--faint);margin-right:8px}
+.fv em{font-style:normal;font-weight:700}
+.fr.last .fk{color:var(--ink);font-weight:600}
+.fn{padding:6px 0 0;font-size:12px;color:var(--faint)}
+
+/* occasions */
+.oi{margin-top:10px;padding:10px;border:1px solid var(--line2);border-radius:14px;background:var(--field);display:grid;gap:8px}
+.oi1{display:grid;grid-template-columns:1fr 40px;gap:8px}
+.oi input{background:var(--card)}
+
+/* history */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:6px;top:10px;bottom:20px;border-left:1.5px dashed var(--seam)}
+.ti{position:relative}
+.td{position:absolute;left:-22px;top:20px;width:13px;height:13px;border-radius:50%;background:var(--card);border:2px solid var(--seam)}
+.td.now{background:var(--ok);border-color:var(--ok);box-shadow:0 0 0 4px var(--oksoft)}
+.th{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.th b{font-size:14.5px}
+.th .bg.now{background:var(--oksoft);color:var(--ok)}
+.sha{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--faint)}
+.ti pre{margin:12px 0 0}
+
+/* loading */
+.sk{height:120px;border-radius:22px;margin-bottom:16px;border:1px solid var(--line);background:linear-gradient(100deg,var(--card) 30%,var(--field) 50%,var(--card) 70%);background-size:220% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-220% 0}}
+
+/* login */
+.lg{max-width:420px;margin:0 auto;padding:60px 18px 40px}
+.lh{text-align:center;margin-bottom:24px}
+.lh .bm{width:68px;height:68px;border-radius:22px;font-size:23px;margin:0 auto 16px}
+.lh .bm::after{inset:6px;border-radius:16px}
+.lh h1{font-size:25px}
+.lg .card .cb{padding:18px}
+.lg h2{font-size:18px;margin-bottom:4px}
+.lf{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:18px;color:var(--faint);font-size:12.5px;text-align:center}
+.lf .ic{width:15px;height:15px}
+
+/* phone preview (screen is always dark, like the app) */
+.dev{width:min(100%,290px);margin:10px auto 2px;padding:9px;border-radius:38px;background:#1b1733;box-shadow:0 22px 40px -22px rgba(30,15,90,.6),inset 0 0 0 1.5px rgba(255,255,255,.09)}
+.scr{position:relative;border-radius:30px;overflow:hidden;background:#0c0720;color:#fff;padding:36px 14px 18px;min-height:210px;font-size:14px}
+.scr::before{content:"";position:absolute;top:11px;left:50%;width:70px;height:19px;margin-left:-35px;border-radius:12px;background:#04020b}
+.scr .sub{color:#b9b3dc}
 .gate{background:#17102b;border:1px solid #3b2a6b;border-radius:20px;padding:18px;text-align:center}
-.gt{font-size:18px;font-weight:900;margin-top:6px}.gm{font-size:13px;line-height:1.6;color:#cdbff5;margin:8px 0 4px}
-.gb{margin-top:8px;padding:11px;border-radius:12px;border:1px solid #4c3a85;color:#c4b5fd;font-weight:800}.gb.p{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.gt{font-size:18px;font-weight:800;margin-top:6px}.gm{font-size:13px;line-height:1.6;color:#cdbff5;margin:8px 0 4px}
+.gb{margin-top:8px;padding:11px;border-radius:12px;border:1px solid #4c3a85;color:#c4b5fd;font-weight:700}.gb.p{background:#7c3aed;color:#fff;border-color:#7c3aed}
 .tip{margin-top:10px;border-radius:12px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.4);padding:8px 10px;font-size:12.5px;font-weight:600;color:#c7d2fe}
-.chip2{font-size:11px;font-weight:800;border-radius:12px;padding:5px 8px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.4);color:#c7d2fe;max-width:55%;text-align:center}
+.chip2{font-size:11px;font-weight:700;border-radius:12px;padding:5px 8px;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.4);color:#c7d2fe;max-width:55%;text-align:center}
 .pill{font-size:12px;font-weight:700;border-radius:99px;padding:6px 12px}
-.sch{margin-top:14px;padding-top:6px;border-top:1px dashed var(--line)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media(min-width:640px){.wrap,.hi,.nav{padding-left:24px;padding-right:24px}}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"></div>
+<div id="app"></div>
 <script>
 (function(){
 'use strict';
@@ -60,7 +211,7 @@ var RULE_KEYS=[
  ['dayDiv','অনুপস্থিতি রেট = বেসিক ÷ কত (এখন ৩০)',20,31],
  ['exact','হিসাবের পদ্ধতি',0,1]
 ];
-var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{ids:{}},defaults:{},flags:{},min:{},maint:{},texts:{},occ:[],rate:''},cfgSha:null,notice:null,noticeSha:null,loaded:false,pg:'16000',hist:{file:'config.json',list:null,loading:false,view:null}};
+var S={token:null,tab:'calc',msg:null,busy:false,cfg:{calc:[],ads:{ids:{}},defaults:{},flags:{},min:{},maint:{},texts:{},occ:[],rate:''},cfgSha:null,notice:null,noticeSha:null,loaded:false,pg:'16000',hist:{file:'config.json',list:null,loading:false,view:null},base:{c:'',n:''},open:{}};
 var app=document.getElementById('app');
 var enc=new TextEncoder(),dec=new TextDecoder();
 
@@ -69,6 +220,45 @@ function b64(buf){var a=new Uint8Array(buf),s='';for(var i=0;i<a.length;i++)s+=S
 function unb64(s){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a;}
 function utf8ToB64(str){return b64(enc.encode(str));}
 function b64ToUtf8(s){return dec.decode(unb64(String(s).replace(/\s/g,'')));}
+
+/* ---------- icons + theme ---------- */
+var IC={
+ calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"/>',
+ ads:'<path d="m3 11 18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+ emerg:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/>',
+ content:'<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+ note:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+ hist:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ refresh:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+ lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',
+ trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+ x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ send:'<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
+ check:'<path d="M20 6 9 17l-5-5"/>',
+ info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+ alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4M12 17h.01"/>',
+ phone:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+ cloud:'<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/>',
+ wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>',
+ up:'<circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/>',
+ zap:'<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+ cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+ star:'<path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>',
+ type:'<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',
+ code:'<path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/>',
+ chev:'<path d="m6 9 6 6 6-6"/>',
+ coins:'<circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 6v2M12 16v2"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',
+ moon:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>',
+ shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+ note2:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+ eye:'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'
+};
+function ic(n,c){return '<svg class="ic'+(c?' '+c:'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(IC[n]||'')+'</svg>';}
+function curTheme(){var t=document.documentElement.getAttribute('data-theme');if(t)return t;return (window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light';}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('ds_admin_theme',t);}catch(e){}}
+try{var th0=localStorage.getItem('ds_admin_theme');if(th0==='light'||th0==='dark')document.documentElement.setAttribute('data-theme',th0);}catch(e){}
 
 /* ---------- token lock (password -> AES) ---------- */
 async function keyFrom(pw,salt){
@@ -146,7 +336,7 @@ async function trySync(obj){
   catch(e){return {k:'warn',t:' ⚠️ কিন্তু অ্যাপ রিপোতে সেভ হয়নি: '+appErr(e)};}
 }
 function appSyncCard(){
-  return '<div class="card"><h2>📦 অ্যাপ রিপো সিঙ্ক</h2><div class="sub">প্রতিবার কনফিগ প্রকাশ করলে এটা নিজে নিজেই হয়। প্রথমবার বা হাতে করতে চাইলে সর্বশেষ প্রকাশিত config.json থেকে '+APP.file+' বানিয়ে '+APP.repo+' ('+APP.branch+') রিপোতে রাখুন। নতুন বিল্ডের আগে ফোনে <b>git pull</b> করে নেবেন।</div><div style="margin-top:10px"><button id="appSync" style="width:100%">এখনই সিঙ্ক করুন</button></div></div>';
+  return '<section class="card"><div class="ch"><span class="ci">'+ic('cloud')+'</span><div class="ct"><h2>অ্যাপ রিপো সিঙ্ক</h2><div class="sub">প্রতিবার কনফিগ প্রকাশ করলে এটা নিজে নিজেই হয়।</div></div></div><div class="cb"><div class="sub" style="margin-top:8px">প্রথমবার বা হাতে করতে চাইলে সর্বশেষ প্রকাশিত config.json থেকে '+APP.file+' বানিয়ে '+APP.repo+' ('+APP.branch+') রিপোতে রাখুন। নতুন বিল্ডের আগে ফোনে <b>git pull</b> করে নেবেন।</div><div class="mt"><button class="btn ghost full" id="appSync" type="button">'+ic('refresh')+'এখনই সিঙ্ক করুন</button></div></div></section>';
 }
 
 /* ---------- model <-> form ---------- */
@@ -273,13 +463,13 @@ function buildNotice(){
 }
 
 /* ---------- phone-look preview ---------- */
-function phone(inner){return '<div class="phone">'+inner+'</div>';}
+function phone(inner){return '<div class="dev"><div class="scr">'+inner+'</div></div>';}
 function gateHtml(kind,msg,btns){
-  var ic=kind==='maint'?'🛠️':'⬆️';
+  var ic0=kind==='maint'?'🛠️':'⬆️';
   var title=kind==='maint'?'রক্ষণাবেক্ষণ চলছে':kind==='hard'?'আপডেট প্রয়োজন':'নতুন আপডেট এসেছে';
   var m=msg||(kind==='maint'?'অ্যাপটি সাময়িকভাবে বন্ধ আছে। কিছুক্ষণ পর আবার চেষ্টা করুন।':kind==='hard'?'চালিয়ে যেতে অ্যাপটির নতুন সংস্করণ নিন।':'নতুন সুবিধা ও উন্নতি পেতে অ্যাপটি আপডেট করুন।');
   var b=btns.map(function(x,i){return '<div class="gb'+(i===0?' p':'')+'">'+x+'</div>';}).join('');
-  return '<div class="gate"><div style="font-size:34px">'+ic+'</div><div class="gt">'+title+'</div><div class="gm">'+esc(m)+'</div>'+b+'</div>';
+  return '<div class="gate"><div style="font-size:34px">'+ic0+'</div><div class="gt">'+title+'</div><div class="gm">'+esc(m)+'</div>'+b+'</div>';
 }
 function previewHtml(){
   var h='';
@@ -288,7 +478,7 @@ function previewHtml(){
     if(S.cfg.maint.on===true)h=gateHtml('maint',S.cfg.maint.msg,['আবার দেখুন']);
     else if(hard)h=gateHtml('hard',mn.msg,['আপডেট করুন']);
     else if(soft)h=gateHtml('soft',mn.msg,['আপডেট করুন','পরে']);
-    else h='<div class="sub" style="color:#cdbff5;text-align:center;padding:30px 0">কোনো গেট/রক্ষণাবেক্ষণ চালু নেই। ফোনে স্বাভাবিক অ্যাপ দেখাবে।</div>';
+    else h='<div class="sub" style="text-align:center;padding:30px 0">কোনো গেট/রক্ষণাবেক্ষণ চালু নেই। ফোনে স্বাভাবিক অ্যাপ দেখাবে।</div>';
     var off=FLAG_KEYS.filter(function(k){return S.cfg.flags[k[0]]===false;}).map(function(k){return k[1];});
     if(off.length)h+='<div class="sub" style="color:#fbbf24;margin-top:10px">বন্ধ থাকবে: '+esc(off.join(', '))+'</div>';
   }else if(S.tab==='content'){
@@ -300,13 +490,14 @@ function previewHtml(){
     h+='<span class="pill" style="background:#3b2a6b">✉ Email</span>';
     if(String(tx.wa||'').trim())h+='<span class="pill" style="background:#14532d">WhatsApp</span>';
     h+='<span class="pill" style="background:#7c2d12">Reddit</span></div>';
-    h+='<div class="sub" style="margin-top:10px;color:#a5a1c2">শেয়ার শিরোনাম: '+esc(String(tx.share||'').trim()||'📊 My Overtime Report')+'</div>';
+    h+='<div class="sub" style="margin-top:10px">শেয়ার শিরোনাম: '+esc(String(tx.share||'').trim()||'📊 My Overtime Report')+'</div>';
   }else if(S.tab==='note'){
     var n=S.notice,c=NT_COL[n.type]||NT_COL.info;
-    h=n.title||n.message?'<div style="border:1.5px solid '+c+'88;background:'+c+'22;border-radius:14px;padding:12px"><div style="font-weight:800;color:'+c+'">'+esc(n.title)+'</div><div style="margin-top:6px;font-size:13px;color:#e5e7eb">'+esc(n.message)+'</div>'+(String(n.button).trim()?'<div class="gb p" style="margin-top:10px;padding:9px">'+esc(n.button)+'</div>':'')+'</div>':'<div class="sub" style="color:#cdbff5;text-align:center;padding:30px 0">শিরোনাম ও বার্তা লিখলে এখানে দেখা যাবে</div>';
+    h=n.title||n.message?'<div style="border:1.5px solid '+c+'88;background:'+c+'22;border-radius:14px;padding:12px"><div style="font-weight:800;color:'+c+'">'+esc(n.title)+'</div><div style="margin-top:6px;font-size:13px;color:#e5e7eb">'+esc(n.message)+'</div>'+(String(n.button).trim()?'<div class="gb p" style="margin-top:10px;padding:9px">'+esc(n.button)+'</div>':'')+'</div>':'<div class="sub" style="text-align:center;padding:30px 0">শিরোনাম ও বার্তা লিখলে এখানে দেখা যাবে</div>';
   }
-  return h?'<div class="sub" style="margin-top:12px">📱 ফোনে যেমন দেখাবে (আনুমানিক):</div>'+phone(h):'';
+  return h?'<section class="card"><div class="ch"><span class="ci">'+ic('phone')+'</span><div class="ct"><h2>ফোনে যেমন দেখাবে</h2><div class="sub">আনুমানিক প্রিভিউ, পরিবর্তন করলে সাথে সাথে বদলায়</div></div></div><div class="cb">'+phone(h)+'</div></section>':'';
 }
+
 function effP(target){
   var p={};for(var k in DEF)p[k]=DEF[k];
   if(target>='2026-11')p.exact=1;
@@ -318,25 +509,29 @@ function steps(g,p){
   var mid=g-p.allowance,room,basic,ot,ab;
   if(p.exact){room=Math.floor(mid/p.basicDiv);basic=room*p.basicMul;ot=t4(basic/p.otDiv);ab=t4(basic/p.dayDiv);}
   else{room=Math.round(mid/p.basicDiv*100)/100;basic=Math.round(mid/p.basicDiv*p.basicMul);ot=Math.round(mid/p.basicDiv*(p.otNum/p.otDiv)*100)/100;ab=basic/p.dayDiv;}
-  return 'গ্রস বেতন = '+g+'<br>অন্যান্য খরচ = '+p.allowance+'<br>মিড বেতন = '+g+' − '+p.allowance+' = '+mid+'<br>রুম রেন্ট = '+mid+' ÷ '+p.basicDiv+' = '+room+'<br>বেসিক বেতন = '+room+' × '+p.basicMul+' = '+basic+'<br>ওভারটাইম রেট = '+basic+' ÷ '+p.otDiv+' = '+ot+'<br>অনুপস্থিতি রেট = '+basic+' ÷ '+p.dayDiv+' = '+ab+(p.exact?'':'<br><i>(পুরনো পদ্ধতি: রাউন্ড করা)</i>');
+  var rows=[['গ্রস বেতন',null,g],['অন্যান্য খরচ',null,p.allowance],['মিড বেতন',g+' − '+p.allowance,mid],['রুম রেন্ট',mid+' ÷ '+p.basicDiv,room],['বেসিক বেতন',room+' × '+p.basicMul,basic],['ওভারটাইম রেট',basic+' ÷ '+p.otDiv,ot],['অনুপস্থিতি রেট',basic+' ÷ '+p.dayDiv,ab]];
+  return '<div class="fl">'+rows.map(function(r,i){return '<div class="fr'+(i>=5?' last':'')+'"><span class="fk">'+r[0]+'</span><span class="fv">'+(r[1]?'<i>'+r[1]+'</i>':'')+'<em>'+r[2]+'</em></span></div>';}).join('')+(p.exact?'':'<div class="fn">পুরনো পদ্ধতি: রাউন্ড করা</div>')+'</div>';
 }
 function calcAt(idx,g){return steps(g,effP(S.cfg.calc[idx].from));}
 
 /* ---------- rendering ---------- */
-function msgHtml(){if(!S.msg)return '';return '<div class="msg '+S.msg.k+'">'+esc(S.msg.t)+'</div>';}
+function al(k,html){var i={ok:'check',bad:'alert',warn:'alert',info:'info'}[k]||'info';return '<div class="al '+k+'">'+ic(i)+'<div>'+html+'</div></div>';}
+function msgHtml(){if(!S.msg)return '';return al(S.msg.k,esc(S.msg.t));}
 function setMsg(k,t){S.msg={k:k,t:t};}
+function sec(icon,title,desc,body){
+  return '<section class="card"><div class="ch"><span class="ci">'+ic(icon)+'</span><div class="ct"><h2>'+title+'</h2>'+(desc?'<div class="sub">'+desc+'</div>':'')+'</div></div><div class="cb">'+body+'</div></section>';
+}
 function viewLogin(){
   var saved=hasSaved();
-  var h='<div class="top"><h1>🔐 অ্যাডমিন প্যানেল</h1></div><div class="card">';
+  var h='<div class="lg"><div class="lh"><div class="bm">MO</div><h1>অ্যাডমিন কনসোল</h1><div class="sub">My Overtime A to Z</div></div><div class="card"><div class="cb">';
   if(saved){
-    h+='<h2>পাসওয়ার্ড দিন</h2><div class="sub">আপনার সংরক্ষিত টোকেন খুলতে।</div><label>পাসওয়ার্ড</label><input id="pw" type="password" autocomplete="current-password"><div style="margin-top:12px" class="row"><button id="doUnlock">ঢুকুন</button></div><div style="margin-top:12px"><button class="bad" id="forget">সংরক্ষিত টোকেন মুছুন</button></div>';
+    h+='<h2>পাসওয়ার্ড দিন</h2><div class="sub">আপনার সংরক্ষিত টোকেন খুলতে।</div><div class="f"><label>পাসওয়ার্ড</label><input id="pw" type="password" autocomplete="current-password"></div><div class="mt"><button class="btn full" id="doUnlock" type="button">'+ic('lock')+'ঢুকুন</button></div><div class="mt"><button class="btn line full" id="forget" type="button">সংরক্ষিত টোকেন মুছুন</button></div>';
   }else{
-    h+='<h2>প্রথমবার সেটআপ</h2><div class="sub">GitHub-এর fine-grained টোকেন (শুধু <b>'+REPO+'</b> রিপো, Contents: Read and write) এবং নিজের একটা পাসওয়ার্ড দিন। টোকেন পাসওয়ার্ড দিয়ে তালাবন্ধ হয়ে শুধু এই ব্রাউজারে থাকবে।</div><label>GitHub টোকেন</label><input id="tk" type="password" autocomplete="off" placeholder="github_pat_..."><label>নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="pw" type="password" autocomplete="new-password"><label>পাসওয়ার্ড আবার</label><input id="pw2" type="password" autocomplete="new-password"><div style="margin-top:12px"><button id="doSetup" style="width:100%">সংরক্ষণ করে ঢুকুন</button></div>';
+    h+='<h2>প্রথমবার সেটআপ</h2><div class="sub">GitHub-এর fine-grained টোকেন (শুধু <b>'+REPO+'</b> রিপো, Contents: Read and write) এবং নিজের একটা পাসওয়ার্ড দিন। অ্যাপ রিপো সিঙ্কের জন্য <b>'+APP.repo+'</b> রিপোতেও একই অনুমতি দিন।</div><div class="f"><label>GitHub টোকেন</label><input id="tk" type="password" autocomplete="off" placeholder="github_pat_..."></div><div class="f"><label>নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="pw" type="password" autocomplete="new-password"></div><div class="f"><label>পাসওয়ার্ড আবার</label><input id="pw2" type="password" autocomplete="new-password"></div><div class="mt"><button class="btn full" id="doSetup" type="button">'+ic('shield')+'সংরক্ষণ করে ঢুকুন</button></div>';
   }
-  h+=msgHtml()+'</div>';
+  h+=msgHtml()+'</div></div><div class="lf">'+ic('lock')+'<span>টোকেন পাসওয়ার্ড দিয়ে এনক্রিপ্ট হয়ে শুধু এই ব্রাউজারে থাকে</span></div></div>';
   return h;
 }
-
 function bindLogin(){
   if($('doUnlock')){
     var go=async function(){
@@ -363,85 +558,103 @@ function bindLogin(){
 }
 function pad2(n){return String(n).padStart(2,'0');}
 function toLocalDT(iso){if(!iso)return '';var d=new Date(iso);if(isNaN(d.getTime()))return '';return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())+'T'+pad2(d.getHours())+':'+pad2(d.getMinutes());}
-function tf(label,path,ph){var v=gp(path);return '<label>'+label+'</label><input data-p="'+path+'" value="'+esc(v==null?'':v)+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>';}
+function tf(label,path,ph){var v=gp(path);return '<div class="f"><label>'+label+'</label><input data-p="'+path+'" value="'+esc(v==null?'':v)+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'></div>';}
+function ta(label,path,max,ph){return '<div class="f"><label>'+label+'</label><textarea data-p="'+path+'" maxlength="'+max+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>'+esc(gp(path)||'')+'</textarea></div>';}
 function tri(path,label,yes,no){
   var v=gp(path),cur=typeof v==='boolean'?(v?'1':'0'):'';
-  return '<label>'+label+'</label><select data-pb="'+path+'"><option value=""'+(cur===''?' selected':'')+'>বদলাবে না</option><option value="1"'+(cur==='1'?' selected':'')+'>'+yes+'</option><option value="0"'+(cur==='0'?' selected':'')+'>'+no+'</option></select>';
+  function b(val,txt,cls){return '<button type="button" class="'+(cur===val?'on '+cls:'')+'" data-pbv="'+path+'" data-v="'+val+'">'+txt+'</button>';}
+  return '<div class="tr"><div class="tl2">'+label+'</div><div class="seg">'+b('','বদলাবে না','z')+b('1',yes,'y')+b('0',no,'n')+'</div></div>';
 }
-function chk(path,label,on){var v=gp(path);var c=on?(v===true):(v!==false);return '<label class="chk"><input type="checkbox" data-pc="'+path+'"'+(c?' checked':'')+'> '+label+'</label>';}
+function chk(path,label,on){var v=gp(path);var c=on?(v===true):(v!==false);return '<label class="sw"><span>'+label+'</span><input type="checkbox" data-pc="'+path+'"'+(c?' checked':'')+'></label>';}
 function schedHtml(pf){
   var isN=pf==='n';
   var g=function(k){return isN?S.notice[k]:gp(pf+'.'+k);};
   var a=isN?'data-ndt':'data-dt';
   var dt=function(k){return a+'="'+(isN?k:pf+'.'+k)+'" value="'+toLocalDT(g(k))+'"';};
   var ro=isN?'data-n="rollout"':'data-p="'+pf+'.rollout"';
-  return '<div class="sch"><div class="sub"><b>⏱ সময়সূচি ও ধাপে ধাপে চালু</b></div><div class="row"><div><label>শুরু (ফাঁকা = এখনই)</label><input type="datetime-local" '+dt('startAt')+'></div><div><label>শেষ (ফাঁকা = চলতে থাকবে)</label><input type="datetime-local" '+dt('endAt')+'></div></div><label>কত % ফোনে চালু হবে (ফাঁকা = সবাই)</label><input inputmode="numeric" '+ro+' value="'+esc(g('rollout')==null?'':g('rollout'))+'" placeholder="যেমন 10"><div class="sub" style="margin-top:4px">প্রতিটা ফোনের একটা স্থায়ী নম্বর (০–৯৯) আছে; সেটা এই % এর কম হলে তবেই চালু। ১০% দিয়ে শুরু করে পরে বাড়ান।</div></div>';
+  var has=!!(g('startAt')||g('endAt')||String(g('rollout')==null?'':g('rollout')).trim()!=='');
+  return '<details class="sch" data-d="'+pf+'"'+((has||S.open[pf])?' open':'')+'><summary>'+ic('hist')+'<span>সময়সূচি ও ধাপে ধাপে চালু</span>'+(has?'<b class="bg">সেট আছে</b>':'')+ic('chev','cv')+'</summary><div class="sb"><div class="g2"><div class="f"><label>শুরু (ফাঁকা = এখনই)</label><input type="datetime-local" '+dt('startAt')+'></div><div class="f"><label>শেষ (ফাঁকা = চলতে থাকবে)</label><input type="datetime-local" '+dt('endAt')+'></div></div><div class="f"><label>কত % ফোনে চালু হবে (ফাঁকা = সবাই)</label><input inputmode="numeric" '+ro+' value="'+esc(g('rollout')==null?'':g('rollout'))+'" placeholder="যেমন 10"><div class="hint">প্রতিটা ফোনের একটা স্থায়ী নম্বর (০–৯৯) আছে; সেটা এই % এর কম হলে তবেই চালু। ১০% দিয়ে শুরু করে পরে বাড়ান।</div></div></div></details>';
 }
 function ruleHtml(r,i){
-  var h='<div class="card"><div class="top"><h2>নিয়ম '+(i+1)+'</h2><button class="bad" data-delrule="'+i+'">মুছুন</button></div><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"><div class="sub" style="margin-top:6px">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div><div class="row" style="flex-wrap:wrap">';
-  RULE_KEYS.forEach(function(k){if(k[0]==='exact')return;h+='<div style="flex:1 1 45%"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
+  var h='<section class="card"><div class="ch"><span class="ci">'+ic('calc')+'</span><div class="ct"><h2>নিয়ম '+(i+1)+'</h2><div class="sub">ফাঁকা রাখলে ওই সংখ্যা বদলাবে না।</div></div><button type="button" class="ib dng" data-delrule="'+i+'" aria-label="নিয়ম মুছুন">'+ic('trash')+'</button></div><div class="cb"><div class="f"><label>কোন মাস থেকে কার্যকর</label><input type="month" data-rule="'+i+'" data-k="from" value="'+esc(r.from)+'"></div><div class="g2">';
+  RULE_KEYS.forEach(function(k){if(k[0]==='exact')return;h+='<div class="f"><label>'+k[1]+'</label><input inputmode="decimal" data-rule="'+i+'" data-k="'+k[0]+'" value="'+esc(r[k[0]])+'"></div>';});
   var ex=String(r.exact==null?'':r.exact);
-  return h+'</div><label>হিসাবের পদ্ধতি</label><select data-rule="'+i+'" data-k="exact"><option value=""'+(ex===''?' selected':'')+'>বদলাবে না (নভেম্বর ২০২৬ থেকে নতুন, আগে পুরনো)</option><option value="1"'+(ex==='1'?' selected':'')+'>নতুন: ভাগফল ছেঁটে (খাতার সূত্র)</option><option value="0"'+(ex==='0'?' selected':'')+'>পুরনো: রাউন্ড করে</option></select><div class="sub cp" data-cp="'+i+'" style="margin-top:10px;line-height:1.8"></div></div>';
+  return h+'</div><div class="f"><label>হিসাবের পদ্ধতি</label><select data-rule="'+i+'" data-k="exact"><option value=""'+(ex===''?' selected':'')+'>বদলাবে না (নভেম্বর ২০২৬ থেকে নতুন, আগে পুরনো)</option><option value="1"'+(ex==='1'?' selected':'')+'>নতুন: ভাগফল ছেঁটে (খাতার সূত্র)</option><option value="0"'+(ex==='0'?' selected':'')+'>পুরনো: রাউন্ড করে</option></select></div><div class="cp" data-cp="'+i+'"></div></div></section>';
 }
-var TABS=[['calc','হিসাব'],['ads','বিজ্ঞাপন'],['emerg','জরুরি'],['content','কনটেন্ট'],['note','নোটিশ'],['hist','ইতিহাস']];
+var TABS=[['calc','হিসাব','calc'],['ads','বিজ্ঞাপন','ads'],['emerg','জরুরি','emerg'],['content','কনটেন্ট','content'],['note','নোটিশ','note'],['hist','ইতিহাস','hist']];
+function navFlags(){
+  var f={},c=S.cfg||{},mn=c.min||{},mt=c.maint||{},fl=c.flags||{},ad=c.ads||{};
+  if(mt.on===true||String(mn.hard||'').trim())f.emerg='bad';
+  else if(String(mn.soft||'').trim()||FLAG_KEYS.some(function(k){return fl[k[0]]===false;}))f.emerg='warn';
+  if(['salary','workers','report','banner','native'].some(function(k){return ad[k]===false;}))f.ads='warn';
+  if(S.notice&&S.notice.active&&(String(S.notice.title).trim()||String(S.notice.message).trim()))f.note='ok';
+  return f;
+}
+function headerHtml(){
+  var fl=navFlags();
+  return '<header class="hd"><div class="hi"><div class="bm">MO</div><div class="ht"><h1>অ্যাডমিন কনসোল</h1><div class="hs">'+OWNER+' / '+REPO+'</div></div><div class="ha"><button class="ib" id="theme" type="button" aria-label="থিম বদলান">'+ic(curTheme()==='dark'?'sun':'moon')+'</button><button class="ib" id="reload" type="button" aria-label="আবার লোড">'+ic('refresh')+'</button><button class="ib" id="lock" type="button" aria-label="লক করুন">'+ic('lock')+'</button></div></div><nav class="nav">'+TABS.map(function(t){return '<button type="button" class="nv'+(S.tab===t[0]?' on':'')+'" data-tab="'+t[0]+'">'+ic(t[2])+'<span>'+t[1]+'</span><i class="dt '+(fl[t[0]]||'')+'"></i></button>';}).join('')+'</nav></header>';
+}
+function dirtyOf(cur){return JSON.stringify(cur.obj)!==S.base[S.tab==='note'?'n':'c'];}
+function dirtyHtml(d,isNote){return '<b><i class="dd'+(d?' on':'')+'"></i>'+(d?'অপ্রকাশিত পরিবর্তন আছে':'প্রকাশিতের সাথে মিল আছে')+'</b><small>'+(isNote?'notice.json':'config.json')+'</small>';}
+function errInner(errs){return ic('alert')+'<div>'+errs.map(esc).join('<br>')+'</div>';}
 function viewMain(){
-  var h='<div class="top"><h1>⚙️ অ্যাডমিন প্যানেল</h1><div style="display:flex;gap:6px"><button class="ghost" id="reload">আবার লোড</button><button class="ghost" id="lock">লক</button></div></div>';
-  h+='<div class="tabs">'+TABS.map(function(t){return '<button data-tab="'+t[0]+'" class="'+(S.tab===t[0]?'on':'')+'">'+t[1]+'</button>';}).join('')+'</div>';
+  var h=headerHtml()+'<main class="wrap">';
+  if(!S.loaded){
+    if(S.busy)return h+'<div class="sk"></div><div class="sk"></div><div class="sk" style="height:180px"></div></main>';
+    return h+msgHtml()+sec('refresh','তথ্য লোড হয়নি','ইন্টারনেট ও টোকেন ঠিক আছে কিনা দেখে আবার চেষ্টা করুন। লোড না হওয়া পর্যন্ত প্রকাশ বাটন বন্ধ থাকে, যাতে ভুলে খালি কনফিগ চলে না যায়।','<div class="mt"><button class="btn full" id="retry" type="button">'+ic('refresh')+'আবার চেষ্টা করুন</button></div>')+'</main>';
+  }
   h+=msgHtml();
   if(S.tab==='calc'){
-    h+='<div class="msg warn">সতর্কতা: ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।</div>';
-    h+='<div class="card"><h2>📒 হিসাবের সূত্র (চলতি মাস)</h2><div class="sub" id="fx" style="line-height:1.8;margin-top:6px"></div><div class="sub" style="margin-top:8px">নভেম্বর ২০২৬ থেকে এই সূত্র (ভাগফলের ভগ্নাংশ বাদ) আপনা-আপনি চলে, আগের মাস আগের মতোই থাকে। "অন্যান্য খরচ" শুধু এখান থেকেই বদলানো যায়।</div><label>নমুনা গ্রস বেতন (নিচের সব ফল এটা দিয়ে দেখায়)</label><input inputmode="numeric" data-pg="1" value="'+esc(S.pg)+'"></div>';
+    h+=al('warn','ফোনে পৌঁছানো হিসাবের নিয়ম <b>স্থায়ী</b> হয়ে যায়। মুছে ফেললেও ফোন থেকে যায় না। বদলাতে চাইলে <b>একই মাসে নতুন মান</b> দিন (আসল সংখ্যায় ফিরতে ২৪৫০, ৩, ২, ৩০, ২, ১০৪)। আগের মাসের হিসাব বদলায় না, শুধু বাছাই করা মাস ও তার পরের মাস।');
+    h+=sec('calc','হিসাবের সূত্র (চলতি মাস)','নভেম্বর ২০২৬ থেকে এই সূত্র (ভাগফলের ভগ্নাংশ বাদ) আপনা-আপনি চলে, আগের মাস আগের মতোই থাকে। "অন্যান্য খরচ" শুধু এখান থেকেই বদলানো যায়।','<div class="f"><label>নমুনা গ্রস বেতন (নিচের সব ফল এটা দিয়ে দেখায়)</label><input inputmode="numeric" data-pg="1" value="'+esc(S.pg)+'"></div><div id="fx"></div>');
     S.cfg.calc.forEach(function(r,i){h+=ruleHtml(r,i);});
-    if(!S.cfg.calc.length)h+='<div class="card sub">কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।</div>';
-    h+='<button class="ghost" id="addRule" style="width:100%">+ নতুন নিয়ম যোগ</button>';
+    if(!S.cfg.calc.length)h+=al('info','কোনো নিয়ম নেই। নিচের বাটনে যোগ করুন।');
+    h+='<button class="btn seam full" id="addRule" type="button">'+ic('plus')+'নতুন নিয়ম যোগ</button>';
   }
   if(S.tab==='ads'){
-    h+='<div class="card"><h2>বিজ্ঞাপনের সুইচ</h2><div class="sub">সর্বশেষ প্রকাশিত মানই ফোনে চলে। জরুরি হলে "বন্ধ" দিন।</div>'+tri('ads.salary','বেতন ট্যাব','চালু','বন্ধ')+tri('ads.workers','কর্মী ট্যাব','চালু','বন্ধ')+tri('ads.report','রিপোর্ট ট্যাব','চালু','বন্ধ')+tri('ads.banner','সব ব্যানার একসাথে','চালু','বন্ধ')+tri('ads.native','নেটিভ বিজ্ঞাপন','চালু','বন্ধ')+'</div>';
-    h+='<div class="card"><h2>বিজ্ঞাপন ইউনিট আইডি বদল</h2><div class="sub">ফাঁকা = অ্যাপের নিজের আইডি। শুধু নিজের AdMob আইডি দিন। পরীক্ষার আইডি দিলে নিজে বিজ্ঞাপনে ক্লিক করবেন না।</div>'+tf('OT ব্যানার','ads.ids.ot','ca-app-pub-…/…')+tf('বেতন ব্যানার','ads.ids.salary','ca-app-pub-…/…')+tf('কর্মী/রিপোর্ট ব্যানার','ads.ids.employee','ca-app-pub-…/…')+tf('নেটিভ (বেতন)','ads.ids.native','ca-app-pub-…/…')+'</div>';
-    h+='<div class="card"><h2>নতুন কর্মীর ডিফল্ট</h2><div class="sub">ফাঁকা = বদলাবে না</div><div class="row"><div>'+tf('নাইট রেট (৳)','defaults.nightRate')+'</div><div>'+tf('কার্যদিবস','defaults.workDays')+'</div></div>'+tri('defaults.bonusOn','বোনাস সুইচ (শুরুতে)','চালু','বন্ধ')+tf('বোনাসের ডিফল্ট পরিমাণ (৳)','defaults.bonusAmt')+'</div>';
+    h+=sec('ads','বিজ্ঞাপনের সুইচ','সর্বশেষ প্রকাশিত মানই ফোনে চলে। জরুরি হলে "বন্ধ" দিন।',tri('ads.salary','বেতন ট্যাব','চালু','বন্ধ')+tri('ads.workers','কর্মী ট্যাব','চালু','বন্ধ')+tri('ads.report','রিপোর্ট ট্যাব','চালু','বন্ধ')+tri('ads.banner','সব ব্যানার একসাথে','চালু','বন্ধ')+tri('ads.native','নেটিভ বিজ্ঞাপন','চালু','বন্ধ'));
+    h+=sec('code','বিজ্ঞাপন ইউনিট আইডি বদল','ফাঁকা = অ্যাপের নিজের আইডি। শুধু নিজের AdMob আইডি দিন। পরীক্ষার আইডি দিলে নিজে বিজ্ঞাপনে ক্লিক করবেন না।',tf('OT ব্যানার','ads.ids.ot','ca-app-pub-…/…')+tf('বেতন ব্যানার','ads.ids.salary','ca-app-pub-…/…')+tf('কর্মী/রিপোর্ট ব্যানার','ads.ids.employee','ca-app-pub-…/…')+tf('নেটিভ (বেতন)','ads.ids.native','ca-app-pub-…/…'));
+    h+=sec('coins','নতুন কর্মীর ডিফল্ট','ফাঁকা = বদলাবে না','<div class="g2">'+tf('নাইট রেট (৳)','defaults.nightRate')+tf('কার্যদিবস','defaults.workDays')+'</div>'+tri('defaults.bonusOn','বোনাস সুইচ (শুরুতে)','চালু','বন্ধ')+tf('বোনাসের ডিফল্ট পরিমাণ (৳)','defaults.bonusAmt'));
   }
   if(S.tab==='emerg'){
-    h+='<div class="card"><h2>🛠️ রক্ষণাবেক্ষণ</h2><div class="sub">চালু করলে সব (বা নির্বাচিত %) ফোনে অ্যাপের উপর বার্তা আসবে, "আবার দেখুন" বাটন থাকবে।</div>'+chk('maint.on','রক্ষণাবেক্ষণ চালু',true)+'<label>বার্তা (ফাঁকা = ডিফল্ট)</label><textarea data-p="maint.msg" maxlength="300">'+esc(S.cfg.maint.msg||'')+'</textarea>'+schedHtml('maint')+'</div>';
-    h+='<div class="card"><h2>⬆️ ন্যূনতম সংস্করণ</h2><div class="sub">নরম = "পরে" বাটন থাকে। বাধ্যতামূলক = আপডেট না করলে অ্যাপ চলবে না।</div><div class="row"><div>'+tf('নরম আপডেট (এর নিচে)','min.soft','4.0.2')+'</div><div>'+tf('বাধ্যতামূলক (এর নিচে)','min.hard','4.0.1')+'</div></div><label>বার্তা (ফাঁকা = ডিফল্ট)</label><textarea data-p="min.msg" maxlength="300">'+esc(S.cfg.min.msg||'')+'</textarea>'+tf('আপডেট লিংক (ফাঁকা = প্লে স্টোর)','min.url','https://play.google.com/…')+schedHtml('min')+'</div>';
-    h+='<div class="card"><h2>🚦 ফিচার কিল সুইচ</h2><div class="sub">টিক সরালে ওই ফিচার বন্ধ। সব ঠিক থাকলে সব টিক রাখুন।</div>'+FLAG_KEYS.map(function(k){return chk('flags.'+k[0],k[1],false);}).join('')+schedHtml('flags')+'</div>';
+    h+=sec('wrench','রক্ষণাবেক্ষণ','চালু করলে সব (বা নির্বাচিত %) ফোনে অ্যাপের উপর বার্তা আসবে, "আবার দেখুন" বাটন থাকবে।',chk('maint.on','রক্ষণাবেক্ষণ চালু',true)+ta('বার্তা (ফাঁকা = ডিফল্ট)','maint.msg',300)+schedHtml('maint'));
+    h+=sec('up','ন্যূনতম সংস্করণ','নরম = "পরে" বাটন থাকে। বাধ্যতামূলক = আপডেট না করলে অ্যাপ চলবে না।','<div class="g2">'+tf('নরম আপডেট (এর নিচে)','min.soft','4.0.2')+tf('বাধ্যতামূলক (এর নিচে)','min.hard','4.0.1')+'</div>'+ta('বার্তা (ফাঁকা = ডিফল্ট)','min.msg',300)+tf('আপডেট লিংক (ফাঁকা = প্লে স্টোর)','min.url','https://play.google.com/…')+schedHtml('min'));
+    h+=sec('zap','ফিচার কিল সুইচ','টিক সরালে ওই ফিচার বন্ধ। সব ঠিক থাকলে সব টিক রাখুন।',FLAG_KEYS.map(function(k){return chk('flags.'+k[0],k[1],false);}).join('')+schedHtml('flags'));
   }
   if(S.tab==='content'){
-    h+='<div class="card"><h2>📅 দিবস তালিকা</h2><div class="sub">অ্যাপে স্থির তারিখের দিবস (২১ ফেব্রু, ২৫/২৬ মার্চ, ১৪ এপ্রিল, ১ মে, ১৪/১৬ ডিসেম্বর, ২৫ ডিসেম্বর) আগে থেকেই আছে। ঈদ, শবে বরাত, দুর্গাপূজা ইত্যাদি চান্দ্র/পরিবর্তনশীল দিবস এখানে যোগ করুন; আগামী ৩ মাসের মধ্যেরগুলো অ্যাপে দেখায় ও সকাল ৮টায় নোটিফিকেশন দেয়।</div>';
-    S.cfg.occ.forEach(function(e,i){h+='<div class="row" style="align-items:flex-end;margin-top:6px"><div style="flex:0 0 150px"><input type="date" data-occ="'+i+'" data-k="date" value="'+esc(e.date)+'"></div><div><input data-occ="'+i+'" data-k="title" maxlength="60" placeholder="দিবসের নাম" value="'+esc(e.title)+'"></div><button class="bad" style="flex:0 0 44px;padding:0" data-delocc="'+i+'">✕</button></div>';});
-    h+='<div style="margin-top:10px"><button class="ghost" id="addOcc" style="width:100%">+ দিবস যোগ</button></div></div>';
-    h+='<div class="card"><h2>📝 লেখা ও লিংক</h2><div class="sub">ফাঁকা = অ্যাপের নিজের মান</div><label>টিপ/বার্তা (হোম স্ক্রিনে এক লাইন, ট্যাপে লুকায়)</label><textarea data-p="texts.tip" maxlength="160">'+esc(S.cfg.texts.tip||'')+'</textarea>'+tf('WhatsApp শেয়ারের শিরোনাম','texts.share','📊 My Overtime Report')+tf('সাপোর্ট ইমেইল','texts.mail','rsa.akash@yahoo.com')+tf('সাপোর্ট WhatsApp (+8801… অথবা https লিংক)','texts.wa','+8801XXXXXXXXX')+tf('শর্তাবলী লিংক (লগইন পাতায়)','texts.terms','https://…')+tf('প্রাইভেসি পলিসি লিংক (লগইন পাতায়)','texts.privacy','https://…')+'</div>';
-    h+='<div class="card"><h2>⭐ রেটিং প্রম্পট</h2>'+tf('কতবার অ্যাপ খোলার পর (ফাঁকা = ২, ০ = কখনো না)','rate','2')+'</div>';
+    var oc='';
+    S.cfg.occ.forEach(function(e,i){oc+='<div class="oi"><div class="oi1"><input type="date" data-occ="'+i+'" data-k="date" value="'+esc(e.date)+'"><button type="button" class="ib dng" data-delocc="'+i+'" aria-label="দিবস মুছুন">'+ic('x')+'</button></div><input data-occ="'+i+'" data-k="title" maxlength="60" placeholder="দিবসের নাম" value="'+esc(e.title)+'"></div>';});
+    h+=sec('cal','দিবস তালিকা','অ্যাপে স্থির তারিখের দিবস (২১ ফেব্রু, ২৫/২৬ মার্চ, ১৪ এপ্রিল, ১ মে, ১৪/১৬ ডিসেম্বর, ২৫ ডিসেম্বর) আগে থেকেই আছে। ঈদ, শবে বরাত, দুর্গাপূজা ইত্যাদি চান্দ্র/পরিবর্তনশীল দিবস এখানে যোগ করুন; আগামী ৩ মাসের মধ্যেরগুলো অ্যাপে দেখায় ও সকাল ৮টায় নোটিফিকেশন দেয়।',oc+'<div class="mt"><button class="btn seam full" id="addOcc" type="button">'+ic('plus')+'দিবস যোগ</button></div>');
+    h+=sec('type','লেখা ও লিংক','ফাঁকা = অ্যাপের নিজের মান',ta('টিপ/বার্তা (হোম স্ক্রিনে এক লাইন, ট্যাপে লুকায়)','texts.tip',160)+tf('WhatsApp শেয়ারের শিরোনাম','texts.share','📊 My Overtime Report')+tf('সাপোর্ট ইমেইল','texts.mail','rsa.akash@yahoo.com')+tf('সাপোর্ট WhatsApp (+8801… অথবা https লিংক)','texts.wa','+8801XXXXXXXXX')+tf('শর্তাবলী লিংক (লগইন পাতায়)','texts.terms','https://…')+tf('প্রাইভেসি পলিসি লিংক (লগইন পাতায়)','texts.privacy','https://…'));
+    h+=sec('star','রেটিং প্রম্পট','',tf('কতবার অ্যাপ খোলার পর (ফাঁকা = ২, ০ = কখনো না)','rate','2'));
   }
   if(S.tab==='note'){
-    var n=S.notice;
-    h+='<div class="card"><label class="chk"><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'> নোটিশ চালু</label><label class="chk"><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'> ফোনে নোটিফিকেশনও পাঠান (একবার)</label>';
-    h+='<label>ধরন</label><select data-n="type">'+['info','success','warning','error'].map(function(t){var nm={info:'তথ্য',success:'সফল/আপডেট',warning:'সতর্কতা',error:'জরুরি'}[t];return '<option value="'+t+'"'+(n.type===t?' selected':'')+'>'+nm+'</option>';}).join('')+'</select>';
-    h+='<label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div class="row"><input data-n="date" value="'+esc(n.date)+'"><button class="ghost" id="newCode" style="flex:0 0 auto">নতুন কোড</button></div>';
-    h+='<label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea>';
-    h+='<label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2">'+schedHtml('n')+'</div>';
+    var n=S.notice,NT=[['info','তথ্য'],['success','সফল/আপডেট'],['warning','সতর্কতা'],['error','জরুরি']];
+    h+=sec('note','নোটিশের অবস্থা','হোম স্ক্রিনে কার্ড হিসেবে দেখায়।','<label class="sw"><span>নোটিশ চালু</span><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'></label><label class="sw"><span>ফোনে নোটিফিকেশনও পাঠান (একবার)</span><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'></label><div class="f"><label>ধরন</label><div class="seg g4">'+NT.map(function(t){return '<button type="button" class="'+(n.type===t[0]?'on t-'+t[0]:'')+'" data-nt="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div></div><div class="f"><label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div style="display:flex;gap:8px"><input data-n="date" value="'+esc(n.date)+'"><button class="btn ghost" id="newCode" type="button" style="flex:none">নতুন কোড</button></div></div>');
+    h+=sec('note2','বিষয়বস্তু','',' <div class="f"><label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"></div><div class="f"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea></div><div class="f"><label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"></div><div class="f"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2"></div>'+schedHtml('n'));
   }
-  if(S.tab==='hist')return h+appSyncCard()+histHtml();
+  if(S.tab==='hist')return h+appSyncCard()+histHtml()+'</main>';
   h+='<div id="pv">'+previewHtml()+'</div>';
-  var cur=S.tab==='note'?buildNotice():buildConfig();
-  h+='<div class="card"><div class="sub">প্রকাশের আগে এই ফাইল যাবে ('+(S.tab==='note'?'notice.json':'config.json')+'):</div><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></div>';
-  if(cur.errs.length)h+='<div class="msg bad" id="errbox">'+cur.errs.map(esc).join('<br>')+'</div>';
-  h+='<div class="bar"><div><button id="publish"'+((S.busy||cur.errs.length)?' disabled':'')+'>'+(S.busy?'পাঠানো হচ্ছে…':'🚀 প্রকাশ করুন ('+(S.tab==='note'?'নোটিশ':'কনফিগ')+')')+'</button></div></div>';
+  var isNote=S.tab==='note',cur=isNote?buildNotice():buildConfig(),js=JSON.stringify(cur.obj);
+  h+='<details class="card code"><summary>'+ic('code')+'<span>প্রকাশের আগে ফাইল দেখুন</span><span class="jsz" id="jsz">'+js.length.toLocaleString('en-US')+(isNote?'':' / 23,000')+'</span>'+ic('chev','cv')+'</summary><pre>'+esc(JSON.stringify(cur.obj,null,2))+'</pre></details>';
+  if(cur.errs.length)h+='<div class="al bad" id="errbox">'+errInner(cur.errs)+'</div>';
+  h+='</main><div class="bar"><div class="bi"><div class="st" id="dirty">'+dirtyHtml(dirtyOf(cur),isNote)+'</div><button id="publish" type="button" class="btn'+(S.busy?' busy':'')+'"'+((S.busy||cur.errs.length)?' disabled':'')+'>'+(S.busy?'পাঠানো হচ্ছে…':ic('send')+'প্রকাশ করুন')+'</button></div></div>';
   return h;
 }
 function fmtDT(iso){var d=new Date(iso);return isNaN(d.getTime())?iso:d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());}
 function histHtml(){
-  var H=S.hist,h='<div class="card"><div class="row"><button class="'+(H.file==='config.json'?'':'ghost')+'" data-hf="config.json">config.json</button><button class="'+(H.file==='notice.json'?'':'ghost')+'" data-hf="notice.json">notice.json</button></div><div class="sub" style="margin-top:8px">প্রতিটা প্রকাশ একটা সংস্করণ হিসেবে জমা থাকে। পুরনোটা ফর্মে এনে দেখে নিতে বা সরাসরি ফিরিয়ে দিতে পারেন।</div>';
-  if(H.file==='config.json')h+='<div class="msg warn" style="margin-bottom:0">মনে রাখুন: যে ফোনে হিসাবের নিয়ম আগেই পৌঁছেছে সেখান থেকে তা ফেরে না। ফিরিয়ে দিলে সুইচ, বিজ্ঞাপন, জরুরি ও কনটেন্ট আগের অবস্থায় যায়।</div>';
-  h+='</div>';
-  if(H.loading)return h+'<div class="card sub">লোড হচ্ছে…</div>';
-  if(!H.list)return h+'<div class="card"><button id="histLoad" style="width:100%">ইতিহাস দেখুন</button></div>';
-  if(!H.list.length)return h+'<div class="card sub">কোনো সংস্করণ পাওয়া যায়নি।</div>';
+  var H=S.hist,isC=H.file==='config.json';
+  var h=sec('hist','সংস্করণের ইতিহাস','প্রতিটা প্রকাশ একটা সংস্করণ হিসেবে জমা থাকে। পুরনোটা ফর্মে এনে দেখে নিতে বা সরাসরি ফিরিয়ে দিতে পারেন।','<div class="seg" style="margin-top:12px"><button type="button" class="'+(isC?'on':'')+'" data-hf="config.json">config.json</button><button type="button" class="'+(!isC?'on':'')+'" data-hf="notice.json">notice.json</button></div>'+(isC?al('warn','মনে রাখুন: যে ফোনে হিসাবের নিয়ম আগেই পৌঁছেছে সেখান থেকে তা ফেরে না। ফিরিয়ে দিলে সুইচ, বিজ্ঞাপন, জরুরি ও কনটেন্ট আগের অবস্থায় যায়।'):''));
+  if(H.loading)return h+'<div class="sk"></div><div class="sk"></div>';
+  if(!H.list)return h+'<button class="btn full" id="histLoad" type="button">'+ic('hist')+'ইতিহাস দেখুন</button>';
+  if(!H.list.length)return h+al('info','কোনো সংস্করণ পাওয়া যায়নি।');
+  h+='<div class="tl">';
   H.list.forEach(function(c,i){
-    h+='<div class="card"><div class="top" style="margin-bottom:6px"><div><b>'+esc(fmtDT(c.date))+(i===0?' · বর্তমান':'')+'</b><div class="sub">'+esc(c.msg)+' · '+esc(c.sha.slice(0,7))+'</div></div></div><div class="row"><button class="ghost" data-hv="'+c.sha+'">দেখুন</button><button class="ghost" data-hl="'+c.sha+'">ফর্মে আনুন</button>'+(i===0?'':'<button data-hr="'+c.sha+'">ফিরিয়ে দিন</button>')+'</div>';
+    h+='<div class="ti"><i class="td'+(i===0?' now':'')+'"></i><div class="card"><div class="cb" style="padding-top:14px"><div class="th"><b>'+esc(fmtDT(c.date))+'</b>'+(i===0?'<span class="bg now">বর্তমান</span>':'')+'</div><div class="sub" style="margin-top:2px">'+esc(c.msg)+' <span class="sha">'+esc(c.sha.slice(0,7))+'</span></div><div class="brow"><button type="button" class="btn ghost sm" data-hv="'+c.sha+'">'+ic('eye')+'দেখুন</button><button type="button" class="btn ghost sm" data-hl="'+c.sha+'">ফর্মে আনুন</button>'+(i===0?'':'<button type="button" class="btn sm" data-hr="'+c.sha+'">ফিরিয়ে দিন</button>')+'</div>';
     if(H.view&&H.view.sha===c.sha)h+='<pre>'+esc(JSON.stringify(H.view.json,null,2))+'</pre>';
-    h+='</div>';
+    h+='</div></div></div>';
   });
-  return h;
+  return h+'</div>';
 }
 function render(){
   if(!S.token){app.innerHTML=viewLogin();bindLogin();return;}
@@ -452,11 +665,12 @@ function keep(fn){var y=window.scrollY;fn();render();window.scrollTo(0,y);}
 /* ---------- events ---------- */
 function $(id){return document.getElementById(id);}
 function qa(sel,fn){Array.prototype.forEach.call(document.querySelectorAll(sel),fn);}
+function snap(){try{S.base.c=JSON.stringify(buildConfig().obj);S.base.n=JSON.stringify(buildNotice().obj);}catch(e){}}
 async function loadAll(){
   S.busy=true;setMsg('ok','লোড হচ্ছে…');render();
   try{
     var c=await getFile('config.json'),n=await getFile('notice.json');
-    S.cfgSha=c.sha;S.noticeSha=n.sha;loadCfg(c.json);loadNotice(n.json);S.loaded=true;S.msg=null;S.hist.list=null;S.hist.view=null;
+    S.cfgSha=c.sha;S.noticeSha=n.sha;loadCfg(c.json);loadNotice(n.json);S.loaded=true;S.msg=null;S.hist.list=null;S.hist.view=null;snap();
   }catch(e){setMsg('bad',errText(e));if(e.status===401){S.token=null;}}
   S.busy=false;render();
 }
@@ -475,6 +689,11 @@ async function histGet(sha){
 function bindMain(){
   $('reload').onclick=function(){if(confirm('অসংরক্ষিত পরিবর্তন বাদ যাবে। আবার লোড করবেন?'))loadAll();};
   $('lock').onclick=function(){S.token=null;S.loaded=false;S.msg=null;render();};
+  $('theme').onclick=function(){setTheme(curTheme()==='dark'?'light':'dark');keep(function(){});};
+  if($('retry'))$('retry').onclick=loadAll;
+  qa('[data-pbv]',function(b){b.onclick=function(){var p=b.getAttribute('data-pbv'),v=b.getAttribute('data-v');keep(function(){if(v==='')dp(p);else sp(p,v==='1');});};});
+  qa('[data-nt]',function(b){b.onclick=function(){keep(function(){S.notice.type=b.getAttribute('data-nt');});};});
+  qa('details[data-d]',function(d){d.ontoggle=function(){S.open[d.getAttribute('data-d')]=d.open;};});
   qa('[data-tab]',function(b){b.onclick=function(){S.tab=b.getAttribute('data-tab');S.msg=null;render();window.scrollTo(0,0);};});
   qa('[data-rule]',function(el){var f=function(){S.cfg.calc[+el.getAttribute('data-rule')][el.getAttribute('data-k')]=el.value;refreshPreview();};el.oninput=f;el.onchange=f;});
   qa('[data-delrule]',function(b){b.onclick=function(){if(confirm('এই নিয়ম তালিকা থেকে সরাবেন? (যে ফোনে আগেই পৌঁছেছে সেখান থেকে যাবে না)'))keep(function(){S.cfg.calc.splice(+b.getAttribute('data-delrule'),1);});};});
@@ -518,7 +737,7 @@ function bindMain(){
       var j=await histGet(b.getAttribute('data-hr'));
       var isN=S.hist.file==='notice.json';
       var sha=await putFile(S.hist.file,j,isN?S.noticeSha:S.cfgSha,'admin: rollback '+S.hist.file+' to '+b.getAttribute('data-hr').slice(0,7));
-      if(isN){S.noticeSha=sha;loadNotice(j);}else{S.cfgSha=sha;loadCfg(j);}
+      if(isN){S.noticeSha=sha;loadNotice(j);S.base.n=JSON.stringify(buildNotice().obj);}else{S.cfgSha=sha;loadCfg(j);S.base.c=JSON.stringify(buildConfig().obj);}
       var rk='ok',rt='✅ ফিরিয়ে দেওয়া হয়েছে ('+S.hist.file+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।';
       if(!isN){var rr=await trySync(j);rk=rr.k;rt+=rr.t;}
       setMsg(rk,rt);
@@ -527,23 +746,26 @@ function bindMain(){
     S.busy=false;render();window.scrollTo(0,0);
   };});
   if($('publish'))$('publish').onclick=publish;
+  var nv=document.querySelector('.nav'),on=nv&&nv.querySelector('.on');if(nv&&on)nv.scrollLeft=on.offsetLeft-(nv.clientWidth-on.offsetWidth)/2;
   refreshCalc();
 }
 function refreshCalc(){
   var g=Number(S.pg);if(!isFinite(g)||g<=0)g=16000;
-  var fx=$('fx');if(fx){var d=new Date(),t=d.getFullYear()+'-'+pad2(d.getMonth()+1);fx.innerHTML='<b>'+t+' মাসের হিসাব</b><br>'+steps(g,effP(t));}
-  qa('.cp',function(el){var i=+el.getAttribute('data-cp');el.innerHTML=/^\d{4}-\d{2}$/.test(S.cfg.calc[i].from)?'<b>'+S.cfg.calc[i].from+' থেকে নমুনা</b><br>'+calcAt(i,g):'';});
+  var fx=$('fx');if(fx){var d=new Date(),t=d.getFullYear()+'-'+pad2(d.getMonth()+1);fx.innerHTML='<div class="fh">'+t+' মাসের হিসাব</div>'+steps(g,effP(t));}
+  qa('.cp',function(el){var i=+el.getAttribute('data-cp');el.innerHTML=/^\d{4}-\d{2}$/.test(S.cfg.calc[i].from)?'<div class="fh">'+S.cfg.calc[i].from+' থেকে নমুনা</div>'+calcAt(i,g):'';});
 }
+function refreshNav(){var fl=navFlags();qa('.nv',function(b){var d=b.querySelector('i.dt');if(d)d.className='dt '+(fl[b.getAttribute('data-tab')]||'');});}
 function refreshPreview(){
   if(S.tab==='hist')return;
-  var cur=S.tab==='note'?buildNotice():buildConfig();
+  var isNote=S.tab==='note',cur=isNote?buildNotice():buildConfig(),j=JSON.stringify(cur.obj);
   var pre=document.querySelector('pre');if(pre)pre.textContent=JSON.stringify(cur.obj,null,2);
   var pv=$('pv');if(pv)pv.innerHTML=previewHtml();
-  refreshCalc();
+  var jz=$('jsz');if(jz)jz.textContent=j.length.toLocaleString('en-US')+(isNote?'':' / 23,000');
+  refreshCalc();refreshNav();
+  var dd=$('dirty');if(dd)dd.innerHTML=dirtyHtml(dirtyOf(cur),isNote);
   var b=$('publish');if(b)b.disabled=!!(S.busy||cur.errs.length);
-  var old=document.getElementById('errbox');
-  if(old)old.remove();
-  if(cur.errs.length){var d=document.createElement('div');d.id='errbox';d.className='msg bad';d.innerHTML=cur.errs.map(esc).join('<br>');var bar=document.querySelector('.bar');bar.parentNode.insertBefore(d,bar);}
+  var old=$('errbox');if(old)old.remove();
+  if(cur.errs.length){var d=document.createElement('div');d.id='errbox';d.className='al bad';d.innerHTML=errInner(cur.errs);var mn=document.querySelector('main');if(mn)mn.appendChild(d);}
 }
 async function publish(){
   var isNote=S.tab==='note';
@@ -565,7 +787,7 @@ async function publish(){
   S.busy=true;S.msg=null;render();
   try{
     var sha=await putFile(name,o,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
-    if(isNote)S.noticeSha=sha;else S.cfgSha=sha;
+    if(isNote){S.noticeSha=sha;S.base.n=JSON.stringify(o);}else{S.cfgSha=sha;S.base.c=JSON.stringify(o);}
     S.hist.list=null;
     var mk='ok',mt='✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।';
     if(!isNote){var ar=await trySync(o);mk=ar.k;mt+=ar.t;}
