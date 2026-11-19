@@ -351,7 +351,7 @@ function loadCfg(c){
   S.cfg={calc:(Array.isArray(c.calc)?c.calc:[]).map(function(r){var o={from:String(r.from||'')};RULE_KEYS.forEach(function(k){o[k[0]]=(r[k[0]]===undefined||r[k[0]]===null)?'':String(r[k[0]]);});return o;}),
     ads:ob(c.ads),defaults:ob(c.defaults),flags:ob(c.flags),min:ob(c.min),maint:ob(c.maint),texts:ob(c.texts),
     occ:(Array.isArray(c.occ)?c.occ:[]).map(function(e){return {date:String((e&&e.date)||''),title:String((e&&e.title)||'')};}),
-    rate:(c.rate===undefined||c.rate===null)?'':String(c.rate)};
+    rate:(c.rate===undefined||c.rate===null)?'':String(c.rate),rev:Math.max(Math.floor(Number(c.rev))||0,(S.cfg&&S.cfg.rev)||0)};
   if(!S.cfg.ads.ids||typeof S.cfg.ads.ids!=='object')S.cfg.ads.ids={};
 }
 function loadNotice(n){
@@ -441,6 +441,7 @@ function buildConfig(){
   if(Object.keys(tx).length)out.texts=tx;
   var rt=String(S.cfg.rate==null?'':S.cfg.rate).trim();
   if(rt!==''){var rn=Number(rt);if(!isFinite(rn)||rn<0||rn>30||Math.round(rn)!==rn)errs.push('রেটিং প্রম্পট: ০–৩০ (০ = কখনো না)');else out.rate=rn;}
+  if(S.cfg.rev>0)out.rev=S.cfg.rev;
   if(JSON.stringify(out).length>23000)errs.push('কনফিগ বড় হয়ে গেছে (২৩,০০০ অক্ষরের বেশি)');
   return {obj:out,errs:errs};
 }
@@ -772,7 +773,7 @@ async function publish(){
   var cur=isNote?buildNotice():buildConfig();
   if(cur.errs.length)return;
   var name=isNote?'notice.json':'config.json';
-  var o=cur.obj,w=[];
+  var o=cur.obj,w=[],nextRev=isNote?0:(S.cfg.rev||0)+1;
   if(isNote){
     w.push('নোটিশ প্রকাশ করবেন?');
     if(o.rollout!=null)w.push('শুধু '+o.rollout+'% ফোনে যাবে।');
@@ -780,13 +781,16 @@ async function publish(){
     w.push('সুইচ/সেটিং ফোনে পৌঁছে যাবে (হিসাবের নিয়ম স্থায়ী)।');
     if(o.maint)w.push('⚠️ রক্ষণাবেক্ষণ চালু: '+(o.maint.rollout!=null?o.maint.rollout+'% ফোনে':'সব ফোনে')+' অ্যাপ ব্যবহার করা যাবে না!');
     if(o.min&&o.min.hard)w.push('⚠️ সংস্করণ '+o.min.hard+' এর নিচের সবাই অ্যাপ ব্যবহার করতে পারবে না, আপডেট লাগবে!');
+    if(!isNote)w.push('সিরিয়াল নম্বর হবে S'+nextRev+' (অ্যাপের ফুটারে দেখাবে)।');
     if(o.flags)w.push('বন্ধ হবে: '+FLAG_KEYS.filter(function(k){return o.flags[k[0]]===false;}).map(function(k){return k[1];}).join(', '));
     if(o.ads&&o.ads.ids)w.push('বিজ্ঞাপন আইডি বদলাচ্ছে।');
   }
   if(!confirm(w.join('\n')+'\n\nনিশ্চিত?'))return;
   S.busy=true;S.msg=null;render();
   try{
+    if(!isNote)o.rev=nextRev;
     var sha=await putFile(name,o,isNote?S.noticeSha:S.cfgSha,'admin: update '+name);
+    if(!isNote)S.cfg.rev=nextRev;
     if(isNote){S.noticeSha=sha;S.base.n=JSON.stringify(o);}else{S.cfgSha=sha;S.base.c=JSON.stringify(o);}
     S.hist.list=null;
     var mk='ok',mt='✅ প্রকাশ হয়েছে ('+name+'). ফোনে কিছুক্ষণের মধ্যে পৌঁছাবে।';
