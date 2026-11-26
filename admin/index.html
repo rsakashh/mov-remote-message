@@ -345,7 +345,120 @@ var FLAG_KEYS=[['pdf','PDF ও WhatsApp শেয়ার'],['cloud','ক্ল
 var NT_COL={info:'#3b82f6',success:'#10b981',warning:'#f59e0b',error:'#ef4444'};
 function ob(x){return x&&typeof x==='object'&&!Array.isArray(x)?JSON.parse(JSON.stringify(x)):{};}
 function newDate(){return 'n'+Date.now().toString(36);}
-function defNotice(){return {active:true,push:false,type:'info',date:newDate(),title:'',message:'',button:'',below:'',startAt:'',endAt:'',rollout:''};}
+
+/* ---- ds98: coloured text / table rows in the notice message ---- */
+function ntMix(a,b,t){
+  var p=function(h){var n=parseInt(String(h).replace('#',''),16)||0;return [(n>>16)&255,(n>>8)&255,n&255];};
+  var x=p(a),y=p(b);
+  return '#'+x.map(function(v,i){return ('0'+Math.round(v+(y[i]-v)*t).toString(16)).slice(-2);}).join('');
+}
+function ntSegs(s,c,b,out){
+  out=out||[];s=String(s==null?'':s);
+  var re=/\{(#[0-9a-fA-F]{6}):([^{}]*)\}|\*\*([^*]+)\*\*/g,last=0,m;
+  while((m=re.exec(s))){
+    if(m.index>last)out.push({t:s.slice(last,m.index),c:c,b:b});
+    if(m[1])ntSegs(m[2],m[1],b,out);else ntSegs(m[3],c,true,out);
+    last=re.lastIndex;
+  }
+  if(last<s.length)out.push({t:s.slice(last),c:c,b:b});
+  return out;
+}
+function ntPlain(s){
+  return String(s||'').split('\n').map(function(l){
+    var t=l.trim();
+    if(t.charAt(0)==='|'){
+      var c=t.split('|').slice(1).map(function(x){return x.trim();}).filter(function(x,i){return i<2||x;});
+      return (c[0]||'')+(c[1]?': '+c[1]:'')+(c[2]?' ('+c[2]+')':'');
+    }
+    return l;
+  }).join('\n').replace(/\{#[0-9a-fA-F]{6}:([^{}]*)\}/g,'$1').replace(/\*\*([^*]+)\*\*/g,'$1');
+}
+function ntInline(s,dark){
+  return ntSegs(s,null,false,[]).map(function(x){
+    var st='';
+    if(x.c)st+='color:'+(dark?ntMix(x.c,'#ffffff',.25):ntMix(x.c,'#000000',.1))+';';
+    if(x.b)st+='font-weight:800;';
+    return st?'<span style="'+st+'">'+esc(x.t)+'</span>':esc(x.t);
+  }).join('');
+}
+function ntBody(msg,dark,c){
+  var lines=String(msg||'').split('\n'),out='',i=0;
+  var isRow=function(l){return l.trim().charAt(0)==='|';};
+  while(i<lines.length){
+    if(isRow(lines[i])){
+      var rows='',first=true;
+      while(i<lines.length&&isRow(lines[i])){
+        var cells=lines[i].trim().split('|').slice(1).map(function(x){return x.trim();});
+        rows+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;'+(first?'':'border-top:1px solid rgba(128,128,160,.2);')+'"><span>'+ntInline(cells[0]||'',dark)+'</span><span style="font-weight:800;white-space:nowrap">'+ntInline(cells[1]||'',dark)+(cells[2]?' <b style="font-size:10px;padding:1px 7px;border-radius:99px;background:'+c+'33;color:'+ntMix(c,'#ffffff',.3)+'">'+esc(ntSegs(cells[2],null,false,[]).map(function(g){return g.t;}).join(''))+'</b>':'')+'</span></div>';
+        first=false;i++;
+      }
+      out+='<div style="margin:8px 0;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)">'+rows+'</div>';
+    }else{
+      var p=[];
+      while(i<lines.length&&!isRow(lines[i])){p.push(lines[i]);i++;}
+      var t=p.join('\n').replace(/^\n+|\n+$/g,'');
+      if(t.trim())out+='<div style="white-space:pre-wrap;line-height:1.6;margin-top:4px">'+ntInline(t,dark)+'</div>';
+    }
+  }
+  return out;
+}
+function ntCard(n,c){
+  var bt={info:'নতুন',success:'সুখবর',warning:'সতর্কতা',error:'জরুরি'}[n.type]||'নতুন';
+  var c2=ntMix(c,'#ffffff',.3);
+  return '<div style="border-radius:18px;padding:1.5px;background:linear-gradient(135deg,'+c+',transparent 55%,'+c2+')"><div style="border-radius:16.5px;background:#1C1736;padding:12px;color:#cbd0e2;font-size:13px">'
+   +'<div style="display:flex;align-items:center;gap:8px"><div style="width:32px;height:32px;border-radius:11px;background:linear-gradient(135deg,'+c+','+c2+');display:grid;place-items:center;font-size:15px;flex:none">🔔</div>'
+   +'<div style="flex:1;min-width:0"><span style="display:inline-block;font-size:9.5px;font-weight:800;color:#fff;background:linear-gradient(90deg,'+c+','+c2+');padding:1px 8px;border-radius:99px">'+bt+'</span><div style="font-weight:800;color:#eef0f8;font-size:13.5px;line-height:1.3">'+esc(n.title)+'</div></div></div>'
+   +'<div style="margin-top:8px">'+ntBody(n.message,true,c)+'</div>'
+   +(String(n.button).trim()?'<div class="gb p" style="margin-top:10px;padding:9px">'+esc(n.button)+'</div>':'')
+   +'</div></div>';
+}
+function ntSw(c){return 'width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 1.5px rgba(128,128,160,.55);background:'+c+';padding:0;cursor:pointer';}
+var NT_BTN='border:0;border-radius:9px;padding:0 11px;height:30px;font-weight:800;font-size:12.5px;background:rgba(128,128,160,.22);color:inherit;cursor:pointer';
+function ntTools(n){
+  var cols=['#DC2626','#EA580C','#16A34A','#2563EB','#7C3AED','#DB2777'];
+  return '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:4px 0 8px">'
+   +cols.map(function(c){return '<button type="button" data-ntf="c:'+c+'" title="'+c+'" style="'+ntSw(c)+'"></button>';}).join('')
+   +'<button type="button" data-ntf="b" style="'+NT_BTN+'">B</button><button type="button" data-ntf="t" style="'+NT_BTN+'">▦ টেবিল</button><button type="button" data-ntf="x" style="'+NT_BTN+'">✕ রঙ মুছুন</button></div>';
+}
+function ntColorHtml(n){
+  var cols=['#3B82F6','#EA580C','#10B981','#EF4444','#7C3AED','#EC4899','#0EA5E9'];
+  return '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:6px">'
+   +cols.map(function(c){return '<button type="button" data-ntcard="'+c+'" title="'+c+'" style="'+ntSw(c)+'"></button>';}).join('')
+   +'<button type="button" data-ntcard="" style="'+NT_BTN+'">ধরন অনুযায়ী</button></div>'
+   +'<input data-n="color" maxlength="7" placeholder="#0EA5E9" value="'+esc(n.color||'')+'">';
+}
+document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest?e.target.closest('[data-ntf],[data-ntcard]'):null;
+  if(!b)return;
+  var fire=function(el){el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));};
+  if(b.hasAttribute('data-ntcard')){
+    var ci=document.querySelector('input[data-n="color"]');
+    if(ci){ci.value=b.getAttribute('data-ntcard');fire(ci);}
+    return;
+  }
+  var ta=document.querySelector('textarea[data-n="message"]');
+  if(!ta)return;
+  var f=b.getAttribute('data-ntf'),s=ta.selectionStart,en=ta.selectionEnd,v=ta.value,sel=v.slice(s,en);
+  if(f==='t'){
+    var ls=v.lastIndexOf('\n',s-1)+1,le=v.indexOf('\n',en);if(le<0)le=v.length;
+    var blk=v.slice(ls,le).split('\n').map(function(l){
+      var t=l.trim();if(!t||t.charAt(0)==='|')return l;
+      var m=t.match(/^(.*?):\s*(.+)$/);
+      return m?'| '+m[1].trim()+' | '+m[2].trim():'| '+t+' | ';
+    }).join('\n');
+    ta.value=v.slice(0,ls)+blk+v.slice(le);
+  }else{
+    if(s===en)return;
+    var w;
+    if(f==='b')w='**'+sel+'**';
+    else if(f==='x')w=sel.replace(/\{#[0-9a-fA-F]{6}:/g,'').replace(/\*\*/g,'').replace(/\}/g,'');
+    else w='{'+f.slice(2)+':'+sel+'}';
+    ta.value=v.slice(0,s)+w+v.slice(en);
+  }
+  fire(ta);ta.focus();
+});
+
+function defNotice(){return {active:true,push:false,type:'info',date:newDate(),title:'',message:'',color:'',button:'',below:'',startAt:'',endAt:'',rollout:''};}
 function loadCfg(c){
   c=c&&typeof c==='object'?c:{};
   S.cfg={calc:(Array.isArray(c.calc)?c.calc:[]).map(function(r){var o={from:String(r.from||'')};RULE_KEYS.forEach(function(k){o[k[0]]=(r[k[0]]===undefined||r[k[0]]===null)?'':String(r[k[0]]);});return o;}),
@@ -356,7 +469,7 @@ function loadCfg(c){
 }
 function loadNotice(n){
   n=n&&typeof n==='object'?n:null;
-  S.notice=n?{active:!!n.active,push:n.push===true,type:n.type||'info',date:n.date||newDate(),title:n.title||'',message:n.message||'',button:n.button||'',below:n.below||'',startAt:n.startAt||'',endAt:n.endAt||'',rollout:(n.rollout===undefined||n.rollout===null)?'':String(n.rollout)}:defNotice();
+  S.notice=n?{active:!!n.active,push:n.push===true,type:n.type||'info',date:n.date||newDate(),title:n.title||'',message:n.rich||n.message||'',color:(/^#[0-9a-fA-F]{6}$/.test(n.color||'')?n.color:''),button:n.button||'',below:n.below||'',startAt:n.startAt||'',endAt:n.endAt||'',rollout:(n.rollout===undefined||n.rollout===null)?'':String(n.rollout)}:defNotice();
 }
 function gp(path){var o=S.cfg,ps=path.split('.');for(var i=0;i<ps.length;i++){if(o==null)return undefined;o=o[ps[i]];}return o;}
 function sp(path,v){var ps=path.split('.'),o=S.cfg;for(var i=0;i<ps.length-1;i++){if(!o[ps[i]]||typeof o[ps[i]]!=='object')o[ps[i]]={};o=o[ps[i]];}o[ps[ps.length-1]]=v;}
@@ -447,13 +560,15 @@ function buildConfig(){
 }
 function buildNotice(){
   var n=S.notice,errs=[];
-  var o={active:!!n.active,type:n.type,date:String(n.date||'').trim(),title:String(n.title).trim(),message:String(n.message).trim()};
+  var rich=String(n.message).trim();var o={active:!!n.active,type:n.type,date:String(n.date||'').trim(),title:String(n.title).trim(),message:ntPlain(rich)};
+  if(o.message!==rich)o.rich=rich;
+  var cl=String(n.color||'').trim();if(cl){if(/^#[0-9a-fA-F]{6}$/.test(cl))o.color=cl;else errs.push('কার্ডের রঙ এমন হবে: #0EA5E9');}
   if(n.active){
     if(!o.title)errs.push('শিরোনাম দিন');
     if(!o.message)errs.push('বার্তা দিন');
   }
   if(o.title.length>80)errs.push('শিরোনাম ৮০ অক্ষরের মধ্যে');
-  if(o.message.length>500)errs.push('বার্তা ৫০০ অক্ষরের মধ্যে');
+  if(o.message.length>500)errs.push('বার্তা ৫০০ অক্ষরের মধ্যে (রঙের চিহ্ন বাদে)');if(o.rich&&o.rich.length>900)errs.push('রঙিন বার্তা ৯০০ অক্ষরের মধ্যে');
   if(!/^[\w.:-]{1,40}$/.test(o.date))errs.push('কোড (date) শুধু ইংরেজি অক্ষর, সংখ্যা, - _ . : (সর্বোচ্চ ৪০)');
   if(String(n.button).trim())o.button=String(n.button).trim().slice(0,30);
   var bl=String(n.below).trim();
@@ -493,8 +608,8 @@ function previewHtml(){
     h+='<span class="pill" style="background:#7c2d12">Reddit</span></div>';
     h+='<div class="sub" style="margin-top:10px">শেয়ার শিরোনাম: '+esc(String(tx.share||'').trim()||'📊 My Overtime Report')+'</div>';
   }else if(S.tab==='note'){
-    var n=S.notice,c=NT_COL[n.type]||NT_COL.info;
-    h=n.title||n.message?'<div style="border:1.5px solid '+c+'88;background:'+c+'22;border-radius:14px;padding:12px"><div style="font-weight:800;color:'+c+'">'+esc(n.title)+'</div><div style="margin-top:6px;font-size:13px;color:#e5e7eb">'+esc(n.message)+'</div>'+(String(n.button).trim()?'<div class="gb p" style="margin-top:10px;padding:9px">'+esc(n.button)+'</div>':'')+'</div>':'<div class="sub" style="text-align:center;padding:30px 0">শিরোনাম ও বার্তা লিখলে এখানে দেখা যাবে</div>';
+    var n=S.notice,c=(/^#[0-9a-fA-F]{6}$/.test(String(n.color||''))?n.color:(NT_COL[n.type]||NT_COL.info));
+    h=n.title||n.message?ntCard(n,c):'<div class="sub" style="text-align:center;padding:30px 0">শিরোনাম ও বার্তা লিখলে এখানে দেখা যাবে</div>';
   }
   return h?'<section class="card"><div class="ch"><span class="ci">'+ic('phone')+'</span><div class="ct"><h2>ফোনে যেমন দেখাবে</h2><div class="sub">আনুমানিক প্রিভিউ, পরিবর্তন করলে সাথে সাথে বদলায়</div></div></div><div class="cb">'+phone(h)+'</div></section>':'';
 }
@@ -632,7 +747,7 @@ function viewMain(){
   if(S.tab==='note'){
     var n=S.notice,NT=[['info','তথ্য'],['success','সফল/আপডেট'],['warning','সতর্কতা'],['error','জরুরি']];
     h+=sec('note','নোটিশের অবস্থা','হোম স্ক্রিনে কার্ড হিসেবে দেখায়।','<label class="sw"><span>নোটিশ চালু</span><input type="checkbox" data-n="active"'+(n.active?' checked':'')+'></label><label class="sw"><span>ফোনে নোটিফিকেশনও পাঠান (একবার)</span><input type="checkbox" data-n="push"'+(n.push?' checked':'')+'></label><div class="f"><label>ধরন</label><div class="seg g4">'+NT.map(function(t){return '<button type="button" class="'+(n.type===t[0]?'on t-'+t[0]:'')+'" data-nt="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div></div><div class="f"><label>কোড (নতুন নোটিশের জন্য নতুন কোড লাগে, নইলে যারা দেখেছে তারা আর দেখবে না)</label><div style="display:flex;gap:8px"><input data-n="date" value="'+esc(n.date)+'"><button class="btn ghost" id="newCode" type="button" style="flex:none">নতুন কোড</button></div></div>');
-    h+=sec('note2','বিষয়বস্তু','',' <div class="f"><label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"></div><div class="f"><label>বার্তা</label><textarea data-n="message" maxlength="500">'+esc(n.message)+'</textarea></div><div class="f"><label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"></div><div class="f"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2"></div>'+schedHtml('n'));
+    h+=sec('note2','বিষয়বস্তু','',' <div class="f"><label>শিরোনাম</label><input data-n="title" maxlength="80" value="'+esc(n.title)+'"></div><div class="f"><label>বার্তা</label>'+ntTools(n)+'<textarea data-n="message" maxlength="900" rows="7">'+esc(n.message)+'</textarea><div class="sub" style="margin-top:6px">লেখা সিলেক্ট করে রঙ বা B চাপুন। টেবিলের জন্য লাইন সিলেক্ট করে "টেবিল" চাপুন (নাম: মান)। পুরনো অ্যাপে সাধারণ লেখা দেখাবে।</div></div><div class="f"><label>কার্ডের রঙ (ফাঁকা = ধরন অনুযায়ী)</label>'+ntColorHtml(n)+'</div><div class="f"><label>বাটনের লেখা (ফাঁকা = বাটন নেই; প্লে স্টোর খুলবে)</label><input data-n="button" maxlength="30" value="'+esc(n.button)+'" placeholder="⬇️ এখনই আপডেট করুন"></div><div class="f"><label>শুধু এর চেয়ে পুরনো সংস্করণে দেখান (যেমন 4.0.2, ফাঁকা = সবাই)</label><input data-n="below" value="'+esc(n.below)+'" placeholder="4.0.2"></div>'+schedHtml('n'));
   }
   if(S.tab==='hist')return h+appSyncCard()+histHtml()+'</main>';
   h+='<div id="pv">'+previewHtml()+'</div>';
